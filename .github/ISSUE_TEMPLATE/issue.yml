@@ -1,0 +1,45 @@
+name: Issue
+description: File an issue
+body:
+- type: checkboxes
+  id: resources
+  attributes:
+    label: Not a minify-html bug
+    description: >
+      The **minify-html** package performs the actual minification.
+      If you have problems with the minification, you need to report the bug there.
+      But first, read [minify-html’s minification section](https://github.com/wilsonzlin/minify-html#minification) to ensure that you aren’t misunderstanding what is optional in HTML.
+    options:
+    - label: I am not reporting an issue with minification.
+      required: true
+- type: input
+  id: python_version
+  attributes:
+    label: Python Version
+    description: Which version of Python were you using?
+    placeholder: 3.9.0
+  validations:
+    required: false
+- type: input
+  id: django_version
+  attributes:
+    label: Django Version
+    description: Which version of Django were you using?
+    placeholder: 3.2.0
+  validations:
+    required: false
+- type: input
+  id: package_version
+  attributes:
+    label: Package Version
+    description: Which version of this package were you using? If not the latest version, please check this issue has not since been resolved.
+    placeholder: 1.0.0
+  validations:
+    required: false
+- type: textarea
+  id: description
+  attributes:
+    label: Description
+    description: Please describe your issue.
+  validations:
+    required: true

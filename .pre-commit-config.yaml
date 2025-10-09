@@ -1,0 +1,59 @@
+ci:
+  autoupdate_schedule: monthly
+
+default_language_version:
+  python: python3.13
+
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c  # frozen: v6.0.0
+  hooks:
+  - id: check-added-large-files
+  - id: check-case-conflict
+  - id: check-json
+  - id: check-merge-conflict
+  - id: check-symlinks
+  - id: check-toml
+  - id: end-of-file-fixer
+  - id: trailing-whitespace
+- repo: https://github.com/crate-ci/typos
+  rev: 1976b238f2710646b971e06bc25737249ee6406d  # frozen: v1
+  hooks:
+  - id: typos
+- repo: https://github.com/tox-dev/pyproject-fmt
+  rev: 8a22e281b3f6d1bb298aaabfc165a943a943882c  # frozen: v2.7.0
+  hooks:
+  - id: pyproject-fmt
+- repo: https://github.com/tox-dev/tox-ini-fmt
+  rev: 4e2cb0e98735e1a57a027d9440b91663e31d10b0  # frozen: 1.6.0
+  hooks:
+  - id: tox-ini-fmt
+- repo: https://github.com/rstcheck/rstcheck
+  rev: 27258fde1ee7d3b1e6a7bbc58f4c7b1dd0e719e5  # frozen: v6.2.5
+  hooks:
+  - id: rstcheck
+    additional_dependencies:
+    - tomli==2.0.1
+- repo: https://github.com/adamchainz/django-upgrade
+  rev: c03f1b1e703cd967c5fd94e29c61f111e8b0eaf0  # frozen: 1.29.0
+  hooks:
+  - id: django-upgrade
+- repo: https://github.com/adamchainz/blacken-docs
+  rev: dda8db18cfc68df532abf33b185ecd12d5b7b326  # frozen: 1.20.0
+  hooks:
+  - id: blacken-docs
+    additional_dependencies:
+    - black==25.1.0
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: 9c89adb347f6b973f4905a4be0051eb2ecf85dea  # frozen: v0.13.3
+  hooks:
+    - id: ruff-check
+      args: [ --fix ]
+    - id: ruff-format
+- repo: https://github.com/pre-commit/mirrors-mypy
+  rev: 9f70dc58c23dfcca1b97af99eaeee3140a807c7e  # frozen: v1.18.2
+  hooks:
+  - id: mypy
+    additional_dependencies:
+    - django-stubs==5.1.2
+    - unittest-parametrize==1.8.0
