@@ -179,7 +179,7 @@ class HttpCompressionMiddlewareTests(SimpleTestCase):
 
     async def test_async_brotli(self):
         response = await self.async_client.get(
-            "/async/l", headers={"accept-encoding": "br"}
+            "/async/", headers={"accept-encoding": "br"}
         )
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "br"
