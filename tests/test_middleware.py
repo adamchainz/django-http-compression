@@ -400,6 +400,7 @@ class BestCodingTests(ParametrizedTestCase, SimpleTestCase):
             ("zstd, gzip, br", "zstd" if py314 else "br"),
             # Quality values
             ("gzip;q=0", "identity"),
+            ("gzip;q=whatever", "identity"),
             ("gzip;q=0.9", "gzip"),
             ("br;q=0.9", "br"),
             ("zstd;q=0.9", "zstd" if py314 else "identity"),
@@ -429,6 +430,11 @@ class BestCodingTests(ParametrizedTestCase, SimpleTestCase):
             ("supercompression;q=0.9, gzip;q=0.8", "gzip"),
             ("gzip;q=0.9, supercompression;q=0.8", "gzip"),
             ("zstd, gzip, supercompression", "zstd" if py314 else "gzip"),
+            # Unknown parameters
+            ("gzip;anything=1", "identity"),
+            ("gzip;anything=1;other=2", "identity"),
+            ("gzip; q=0.9; anything=1", "identity"),
+            ("gzip; anything=1; q=0.9", "identity"),
         ],
     )
     def test_best_coding(self, given, expected):

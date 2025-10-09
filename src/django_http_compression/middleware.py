@@ -156,10 +156,10 @@ class HttpCompressionMiddleware:
                     # Copy CloudFlare again and use the default level, 3.
                     # https://blog.cloudflare.com/new-standards/#:~:text=level%20of%203
                 )
-            else:
+            else:  # pragma: no cover
                 assert_never(coding)
 
-            if len(compressed_content) >= len(response.content):
+            if len(compressed_content) >= len(response.content):  # pragma: no cover
                 return
             response.content = compressed_content
             response.headers["content-length"] = str(len(response.content))
