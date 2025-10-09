@@ -251,10 +251,10 @@ def brotli_compress_sequence(sequence: Iterator[bytes]) -> Generator[bytes]:
     compressor = BrotliCompressor()
     for item in sequence:
         data = compressor.process(item)
-        if data:
+        if data:  # pragma: no branch
             yield data
     out = compressor.finish()
-    if out:
+    if out:  # pragma: no branch
         yield out
 
 
@@ -267,10 +267,10 @@ async def brotli_compress_sequence_async(
     compressor = BrotliCompressor()
     async for item in sequence:
         data = compressor.process(item)
-        if data:
+        if data:  # pragma: no branch
             yield data
     out = compressor.finish()
-    if out:
+    if out:  # pragma: no branch
         yield out
 
 
@@ -281,10 +281,10 @@ def zstd_compress_sequence(sequence: Iterator[bytes]) -> Generator[bytes]:
     compressor = ZstdCompressor()
     for item in sequence:
         data = compressor.compress(item, mode=ZstdCompressor.FLUSH_BLOCK)
-        if data:
+        if data:  # pragma: no branch
             yield data
     out = compressor.flush(mode=ZstdCompressor.FLUSH_FRAME)
-    if out:
+    if out:  # pragma: no branch
         yield out
 
 
@@ -297,8 +297,8 @@ async def zstd_compress_sequence_async(
     compressor = ZstdCompressor()
     async for item in sequence:
         data = compressor.compress(item, mode=ZstdCompressor.FLUSH_BLOCK)
-        if data:
+        if data:  # pragma: no branch
             yield data
     out = compressor.flush(mode=ZstdCompressor.FLUSH_FRAME)
-    if out:
+    if out:  # pragma: no branch
         yield out
