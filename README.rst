@@ -20,6 +20,8 @@ django-http-compression
 
 Django middleware for compressing HTTP responses with Zstandard, Brotli, or Gzip.
 
+For a bit of background, see the `introductory blog post <https://adamj.eu/tech/2025/10/10/introducing-django-http-compression/>`__.
+
 ----
 
 **Work smarter and faster** with my book `Boost Your Django DX <https://adamchainz.gumroad.com/l/byddx>`__ which covers many ways to improve your development experience.
