@@ -95,7 +95,7 @@ class HttpCompressionMiddlewareTests(SimpleTestCase):
         assert response.headers["content-encoding"] == "br"
         assert response.headers["vary"] == "accept-encoding"
         content = response.getvalue()
-        assert content.startswith(b"\x1b]\x01\x00")
+        assert content.startswith(b"\x8b\x07\x00\xf8")
         decompressed = brotli_decompress(content)
         assert decompressed.decode() == basic_html
 
@@ -160,14 +160,16 @@ class HttpCompressionMiddlewareTests(SimpleTestCase):
         assert decompressed == b""
 
     async def test_async_identity(self):
-        response = await self.async_client.get("/")
+        response = await self.async_client.get("/async/")
         assert response.status_code == HTTPStatus.OK
         assert "content-encoding" not in response.headers
         assert "vary" not in response.headers
         assert response.content.decode() == basic_html
 
     async def test_async_gzip(self):
-        response = await self.async_client.get("/", headers={"accept-encoding": "gzip"})
+        response = await self.async_client.get(
+            "/async/", headers={"accept-encoding": "gzip"}
+        )
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "gzip"
         assert response.headers["vary"] == "accept-encoding"
@@ -176,7 +178,9 @@ class HttpCompressionMiddlewareTests(SimpleTestCase):
         assert decompressed.decode() == basic_html
 
     async def test_async_brotli(self):
-        response = await self.async_client.get("/", headers={"accept-encoding": "br"})
+        response = await self.async_client.get(
+            "/async/", headers={"accept-encoding": "br"}
+        )
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "br"
         assert response.headers["vary"] == "accept-encoding"
@@ -188,7 +192,9 @@ class HttpCompressionMiddlewareTests(SimpleTestCase):
     async def test_async_zstd(self):
         from compression.zstd import decompress
 
-        response = await self.async_client.get("/", headers={"accept-encoding": "zstd"})
+        response = await self.async_client.get(
+            "/async/", headers={"accept-encoding": "zstd"}
+        )
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "zstd"
         assert response.headers["vary"] == "accept-encoding"
@@ -400,6 +406,7 @@ class BestCodingTests(ParametrizedTestCase, SimpleTestCase):
             ("zstd, gzip, br", "zstd" if py314 else "br"),
             # Quality values
             ("gzip;q=0", "identity"),
+            ("gzip;q=whatever", "identity"),
             ("gzip;q=0.9", "gzip"),
             ("br;q=0.9", "br"),
             ("zstd;q=0.9", "zstd" if py314 else "identity"),
@@ -429,6 +436,11 @@ class BestCodingTests(ParametrizedTestCase, SimpleTestCase):
             ("supercompression;q=0.9, gzip;q=0.8", "gzip"),
             ("gzip;q=0.9, supercompression;q=0.8", "gzip"),
             ("zstd, gzip, supercompression", "zstd" if py314 else "gzip"),
+            # Unknown parameters
+            ("gzip;anything=1", "identity"),
+            ("gzip;anything=1;other=2", "identity"),
+            ("gzip; q=0.9; anything=1", "identity"),
+            ("gzip; anything=1; q=0.9", "identity"),
         ],
     )
     def test_best_coding(self, given, expected):

@@ -156,10 +156,10 @@ class HttpCompressionMiddleware:
                     # Copy CloudFlare again and use the default level, 3.
                     # https://blog.cloudflare.com/new-standards/#:~:text=level%20of%203
                 )
-            else:
+            else:  # pragma: no cover
                 assert_never(coding)
 
-            if len(compressed_content) >= len(response.content):
+            if len(compressed_content) >= len(response.content):  # pragma: no cover
                 return
             response.content = compressed_content
             response.headers["content-length"] = str(len(response.content))
@@ -251,10 +251,11 @@ def brotli_compress_sequence(sequence: Iterator[bytes]) -> Generator[bytes]:
     compressor = BrotliCompressor()
     for item in sequence:
         data = compressor.process(item)
-        if data:
+        data += compressor.flush()
+        if data:  # pragma: no branch
             yield data
     out = compressor.finish()
-    if out:
+    if out:  # pragma: no branch
         yield out
 
 
@@ -267,10 +268,10 @@ async def brotli_compress_sequence_async(
     compressor = BrotliCompressor()
     async for item in sequence:
         data = compressor.process(item)
-        if data:
+        if data:  # pragma: no branch
             yield data
     out = compressor.finish()
-    if out:
+    if out:  # pragma: no branch
         yield out
 
 
@@ -281,10 +282,10 @@ def zstd_compress_sequence(sequence: Iterator[bytes]) -> Generator[bytes]:
     compressor = ZstdCompressor()
     for item in sequence:
         data = compressor.compress(item, mode=ZstdCompressor.FLUSH_BLOCK)
-        if data:
+        if data:  # pragma: no branch
             yield data
     out = compressor.flush(mode=ZstdCompressor.FLUSH_FRAME)
-    if out:
+    if out:  # pragma: no branch
         yield out
 
 
@@ -297,8 +298,8 @@ async def zstd_compress_sequence_async(
     compressor = ZstdCompressor()
     async for item in sequence:
         data = compressor.compress(item, mode=ZstdCompressor.FLUSH_BLOCK)
-        if data:
+        if data:  # pragma: no branch
             yield data
     out = compressor.flush(mode=ZstdCompressor.FLUSH_FRAME)
-    if out:
+    if out:  # pragma: no branch
         yield out
