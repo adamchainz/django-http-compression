@@ -47,6 +47,15 @@ Installation
 
        python -m pip install django-http-compression
 
+  To include Brotli support, add the ``brotli`` extra to pull in the `brotli <https://pypi.org/project/Brotli/>`__ package:
+
+  .. code-block:: sh
+
+      python -m pip install 'django-http-compression[brotli]'
+
+  Brotli support is recommended only on Python 3.13 and below.
+  From Python 3.14, the standard library includes Zstandard support, which is more performant than Brotli and has wide browser support.
+
 2. Add django-http-compression to your ``INSTALLED_APPS``:
 
    .. code-block:: python
