@@ -70,6 +70,22 @@ async def async_streaming(request: HttpRequest) -> StreamingHttpResponse:
     return StreamingHttpResponse(lines())
 
 
+async def async_streaming_empty(request: HttpRequest) -> StreamingHttpResponse:
+    async def empty() -> AsyncGenerator[bytes]:
+        if False:  # pragma: no cover
+            yield b""  # type: ignore[unreachable]
+
+    return StreamingHttpResponse(empty())
+
+
+async def async_streaming_blanks(request: HttpRequest) -> StreamingHttpResponse:
+    async def empty() -> AsyncGenerator[bytes]:
+        yield b""
+        yield b""
+
+    return StreamingHttpResponse(empty())
+
+
 def binary(request: HttpRequest) -> FileResponse:
     module_dir = Path(__file__).parent
     return FileResponse(
