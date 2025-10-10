@@ -6,8 +6,6 @@ from types import MappingProxyType
 from typing import Callable, Literal, cast
 
 from asgiref.sync import iscoroutinefunction, markcoroutinefunction
-from brotli import Compressor as BrotliCompressor
-from brotli import compress as brotli_compress
 from django.http import HttpRequest, HttpResponse, StreamingHttpResponse
 from django.http.response import HttpResponseBase
 from django.utils.cache import patch_vary_headers
@@ -22,6 +20,14 @@ try:
     HAVE_ZSTD = True
 except ImportError:
     HAVE_ZSTD = False
+
+try:
+    from brotli import Compressor as BrotliCompressor
+    from brotli import compress as brotli_compress
+
+    HAVE_BROTLI = True
+except ImportError:  # pragma: no cover
+    HAVE_BROTLI = False
 
 
 class HttpCompressionMiddleware:
@@ -177,7 +183,7 @@ class HttpCompressionMiddleware:
 codings = MappingProxyType(
     {
         **({"zstd": 0} if HAVE_ZSTD else {}),
-        "br": 1,
+        **({"br": 1} if HAVE_BROTLI else {}),
         "gzip": 2,
         "identity": 3,
     }
