@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import AsyncGenerator, Awaitable, Generator, Iterator
 from functools import lru_cache, partial
+from gzip import GzipFile
 from types import MappingProxyType
 from typing import Callable, Literal, cast
 
@@ -9,7 +10,10 @@ from asgiref.sync import iscoroutinefunction, markcoroutinefunction
 from django.http import HttpRequest, HttpResponse, StreamingHttpResponse
 from django.http.response import HttpResponseBase
 from django.utils.cache import patch_vary_headers
-from django.utils.text import compress_sequence as gzip_compress_sequence
+from django.utils.text import (  # type: ignore [attr-defined]
+    StreamingBuffer,
+    _get_random_filename,
+)
 from django.utils.text import compress_string as gzip_compress
 from typing_extensions import assert_never
 
@@ -248,6 +252,29 @@ def _parse_part(
                         return (q, codings[coding], cast(Coding, coding))
 
     return None
+
+
+def gzip_compress_sequence(
+    sequence: Iterator[bytes], *, max_random_bytes: int
+) -> Generator[bytes]:
+    """
+    Copy of Django’s compress_sequence() but with streaming response flushing
+    bug fixed.
+    """
+    buf = StreamingBuffer()
+    filename = _get_random_filename(max_random_bytes) if max_random_bytes else None
+    with GzipFile(
+        filename=filename, mode="wb", compresslevel=6, fileobj=buf, mtime=0
+    ) as zfile:
+        # Output headers...
+        yield b""  # Optimization
+        for item in sequence:
+            zfile.write(item)
+            zfile.flush()  # Bug fix
+            data = buf.read()
+            if data:
+                yield data
+    yield buf.read()
 
 
 def brotli_compress_sequence(sequence: Iterator[bytes]) -> Generator[bytes]:
