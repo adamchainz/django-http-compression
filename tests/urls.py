@@ -11,6 +11,7 @@ urlpatterns = [
     path("async/", views.async_),
     path("streaming/", views.streaming),
     path("streaming/empty/", views.streaming_empty),
+    path("streaming/blanks/", views.streaming_blanks),
     path("async/streaming/", views.async_streaming),
     path("binary/", views.binary),
     path("etag/", views.etag),

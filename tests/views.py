@@ -54,6 +54,14 @@ def streaming_empty(request: HttpRequest) -> StreamingHttpResponse:
     return StreamingHttpResponse(empty())
 
 
+def streaming_blanks(request: HttpRequest) -> StreamingHttpResponse:
+    def empty() -> Generator[bytes]:
+        yield b""
+        yield b""
+
+    return StreamingHttpResponse(empty())
+
+
 async def async_streaming(request: HttpRequest) -> StreamingHttpResponse:
     async def lines() -> AsyncGenerator[str]:
         for line in basic_html.splitlines(keepends=True):

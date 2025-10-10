@@ -246,6 +246,57 @@ class HttpCompressionMiddlewareTests(SimpleTestCase):
         decompressed = decompress(content)
         assert decompressed == b""
 
+    def test_streaming_blanks_identity(self):
+        response = self.client.get("/streaming/blanks/")
+
+        assert response.status_code == HTTPStatus.OK
+        assert "content-encoding" not in response.headers
+        assert "vary" not in response.headers
+        content = response.getvalue()
+        assert content == b""
+
+    def test_streaming_blanks_gzip(self):
+        response = self.client.get(
+            "/streaming/blanks/", headers={"accept-encoding": "gzip"}
+        )
+
+        assert response.status_code == HTTPStatus.OK
+        assert response.headers["content-encoding"] == "gzip"
+        assert response.headers["vary"] == "accept-encoding"
+        content = response.getvalue()
+        assert content.startswith(b"\x1f\x8b\x08")
+        decompressed = gzip.decompress(content)
+        assert decompressed == b""
+
+    def test_streaming_blanks_brotli(self):
+        response = self.client.get(
+            "/streaming/blanks/", headers={"accept-encoding": "br"}
+        )
+
+        assert response.status_code == HTTPStatus.OK
+        assert response.headers["content-encoding"] == "br"
+        assert response.headers["vary"] == "accept-encoding"
+        content = response.getvalue()
+        assert content == b"k\x00\x03"
+        decompressed = brotli_decompress(content)
+        assert decompressed == b""
+
+    @pytest.mark.skipif(sys.version_info < (3, 14), reason="Python 3.14+")
+    def test_streaming_blanks_zstd(self):
+        from compression.zstd import decompress
+
+        response = self.client.get(
+            "/streaming/blanks/", headers={"accept-encoding": "zstd"}
+        )
+
+        assert response.status_code == HTTPStatus.OK
+        assert response.headers["content-encoding"] == "zstd"
+        assert response.headers["vary"] == "accept-encoding"
+        content = response.getvalue()
+        assert content.startswith(b"(\xb5/\xfd")
+        decompressed = decompress(content)
+        assert decompressed == b""
+
     async def test_async_identity(self):
         response = await self.async_client.get("/async/")
         assert response.status_code == HTTPStatus.OK
