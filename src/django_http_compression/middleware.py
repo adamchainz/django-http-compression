@@ -1,6 +1,12 @@
 from __future__ import annotations
 
-from collections.abc import AsyncGenerator, Awaitable, Generator, Iterator
+from collections.abc import (
+    AsyncGenerator,
+    AsyncIterator,
+    Awaitable,
+    Generator,
+    Iterator,
+)
 from functools import lru_cache, partial
 from gzip import GzipFile
 from types import MappingProxyType
@@ -97,29 +103,26 @@ class HttpCompressionMiddleware:
         if response.streaming:
             response = cast(StreamingHttpResponse, response)
             if response.is_async:
-                # pull to lexical scope to capture fixed reference in case
-                # streaming_content is set again later.
-                original_iterator = response.streaming_content
+                streaming_content = cast(
+                    AsyncIterator[bytes], response.streaming_content
+                )
 
                 if coding == "gzip":
-
-                    async def compressed_wrapper() -> AsyncGenerator[bytes]:
-                        # Mypy cannot narrow that original_iterator is async
-                        async for chunk in original_iterator:  # type: ignore [union-attr]
-                            yield gzip_compress(
-                                chunk,
-                                max_random_bytes=self.gzip_max_random_bytes,
-                            )
+                    compressed_wrapper = partial(
+                        gzip_compress_sequence_async,
+                        streaming_content,
+                        max_random_bytes=self.gzip_max_random_bytes,
+                    )
 
                 elif coding == "br":
                     compressed_wrapper = partial(
                         brotli_compress_sequence_async,
-                        original_iterator,  # type: ignore [arg-type]
+                        streaming_content,
                     )
                 elif coding == "zstd":
                     compressed_wrapper = partial(
                         zstd_compress_sequence_async,
-                        original_iterator,  # type: ignore [arg-type]
+                        streaming_content,
                     )
                 else:  # pragma: no cover
                     assert_never(coding)
@@ -277,6 +280,28 @@ def gzip_compress_sequence(
     yield buf.read()
 
 
+async def gzip_compress_sequence_async(
+    sequence: AsyncIterator[bytes], *, max_random_bytes: int
+) -> AsyncGenerator[bytes]:
+    """
+    Fixed version of Django's gzip_wrapper().
+    """
+    buf = StreamingBuffer()
+    filename = _get_random_filename(max_random_bytes) if max_random_bytes else None
+    with GzipFile(
+        filename=filename, mode="wb", compresslevel=6, fileobj=buf, mtime=0
+    ) as zfile:
+        # Output headers...
+        yield b""  # Optimization
+        async for item in sequence:
+            zfile.write(item)
+            zfile.flush()  # Bug fix
+            data = buf.read()
+            if data:
+                yield data
+    yield buf.read()
+
+
 def brotli_compress_sequence(sequence: Iterator[bytes]) -> Generator[bytes]:
     # Output headers
     yield b""
@@ -293,14 +318,15 @@ def brotli_compress_sequence(sequence: Iterator[bytes]) -> Generator[bytes]:
 
 
 async def brotli_compress_sequence_async(
-    sequence: AsyncGenerator[bytes, None],
-) -> AsyncGenerator[bytes, None]:
+    sequence: AsyncIterator[bytes],
+) -> AsyncGenerator[bytes]:
     # Output headers
     yield b""
 
     compressor = BrotliCompressor()
     async for item in sequence:
         data = compressor.process(item)
+        data += compressor.flush()
         if data:  # pragma: no branch
             yield data
     out = compressor.finish()
@@ -323,8 +349,8 @@ def zstd_compress_sequence(sequence: Iterator[bytes]) -> Generator[bytes]:
 
 
 async def zstd_compress_sequence_async(
-    sequence: AsyncGenerator[bytes, None],
-) -> AsyncGenerator[bytes, None]:
+    sequence: AsyncIterator[bytes],
+) -> AsyncGenerator[bytes]:
     # Output headers
     yield b""
 
