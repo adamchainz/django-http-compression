@@ -41,6 +41,7 @@ classifiers = [
 dependencies = [
   "asgiref>=3.6",
   "django>=4.2",
+  "typing-extensions>=4.1",
 ]
 optional-dependencies.brotli = [
   "brotli>=1.0.1",
@@ -53,7 +54,6 @@ test = [
   "pytest",
   "pytest-django",
   "pytest-randomly",
-  "typing-extensions>=4.14.1",
   "unittest-parametrize>=1.8",
 ]
 django42 = [ "django>=4.2a1,<5; python_version>='3.8'" ]
