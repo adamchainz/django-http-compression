@@ -3,12 +3,16 @@ from __future__ import annotations
 import gzip
 import inspect
 import sys
+import zlib
+from collections.abc import Iterator
 from gzip import decompress as gzip_decompress
 from http import HTTPStatus
 from textwrap import dedent
+from typing import cast
 
 import django
 import pytest
+from brotli import Decompressor as BrotliDecompressor
 from brotli import decompress as brotli_decompress
 from django.http import StreamingHttpResponse
 from django.middleware import gzip as django_middleware_gzip
@@ -22,6 +26,7 @@ from tests.views import basic_html
 class HttpCompressionMiddlewareTests(SimpleTestCase):
     def test_short(self):
         response = self.client.get("/short/", headers={"accept-encoding": "gzip"})
+
         assert response.status_code == HTTPStatus.OK
         assert "content-encoding" not in response.headers
         assert "vary" not in response.headers
@@ -29,6 +34,7 @@ class HttpCompressionMiddlewareTests(SimpleTestCase):
 
     def test_encoded(self):
         response = self.client.get("/encoded/", headers={"accept-encoding": "gzip"})
+
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "supercompression"
         assert "vary" not in response.headers
@@ -36,6 +42,7 @@ class HttpCompressionMiddlewareTests(SimpleTestCase):
 
     def test_identity(self):
         response = self.client.get("/")
+
         assert response.status_code == HTTPStatus.OK
         assert "content-encoding" not in response.headers
         assert "vary" not in response.headers
@@ -43,6 +50,7 @@ class HttpCompressionMiddlewareTests(SimpleTestCase):
 
     def test_gzip(self):
         response = self.client.get("/", headers={"accept-encoding": "gzip"})
+
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "gzip"
         assert response.headers["vary"] == "accept-encoding"
@@ -52,6 +60,7 @@ class HttpCompressionMiddlewareTests(SimpleTestCase):
 
     def test_brotli(self):
         response = self.client.get("/", headers={"accept-encoding": "br"})
+
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "br"
         assert response.headers["vary"] == "accept-encoding"
@@ -64,6 +73,7 @@ class HttpCompressionMiddlewareTests(SimpleTestCase):
         from compression.zstd import decompress
 
         response = self.client.get("/", headers={"accept-encoding": "zstd"})
+
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "zstd"
         assert response.headers["vary"] == "accept-encoding"
@@ -73,47 +83,121 @@ class HttpCompressionMiddlewareTests(SimpleTestCase):
 
     def test_streaming_identity(self):
         response = self.client.get("/streaming/")
+
+        assert isinstance(response, StreamingHttpResponse)
+        assert not response.is_async
         assert response.status_code == HTTPStatus.OK
         assert "content-encoding" not in response.headers
         assert "vary" not in response.headers
-        content = response.getvalue()
+        streaming_content = cast(Iterator[bytes], response.streaming_content)
+        content = next(streaming_content)
+        assert content == b"<!doctype html>\n"
+        content += next(streaming_content)
+        assert content == b"<!doctype html>\n<html>\n"
+        for chunk in streaming_content:
+            content += chunk
         assert content.decode() == basic_html
 
     def test_streaming_gzip(self):
         response = self.client.get("/streaming/", headers={"accept-encoding": "gzip"})
+
+        assert isinstance(response, StreamingHttpResponse)
+        assert not response.is_async
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "gzip"
         assert response.headers["vary"] == "accept-encoding"
-        content = response.getvalue()
-        assert content.startswith(b"\x1f\x8b\x08")
-        decompressed = gzip.decompress(content)
-        assert decompressed.decode() == basic_html
+
+        decompressor = zlib.decompressobj(zlib.MAX_WBITS | 16)  # gzip decoding
+        content = b""
+        streaming_content = cast(Iterator[bytes], response.streaming_content)
+
+        decompressed = decompressor.decompress(next(streaming_content))
+        assert decompressed == b""
+        content += decompressed
+
+        decompressed = decompressor.decompress(next(streaming_content))
+        assert decompressed == b"<!doctype html>\n"
+        content += decompressed
+
+        decompressed = decompressor.decompress(next(streaming_content))
+        assert decompressed == b"<html>\n"
+        content += decompressed
+
+        for chunk in streaming_content:
+            content += decompressor.decompress(chunk)
+        content += decompressor.flush()
+
+        assert content.decode() == basic_html
 
     def test_streaming_brotli(self):
         response = self.client.get("/streaming/", headers={"accept-encoding": "br"})
+
+        assert isinstance(response, StreamingHttpResponse)
+        assert not response.is_async
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "br"
         assert response.headers["vary"] == "accept-encoding"
-        content = response.getvalue()
-        assert content.startswith(b"\x8b\x07\x00\xf8")
-        decompressed = brotli_decompress(content)
-        assert decompressed.decode() == basic_html
+
+        streaming_content = cast(Iterator[bytes], response.streaming_content)
+        decompressor = BrotliDecompressor()
+        content = b""
+
+        decompressed = decompressor.process(next(streaming_content))
+        assert decompressed == b""
+        content += decompressed
+
+        decompressed = decompressor.process(next(streaming_content))
+        assert decompressed == b"<!doctype html>\n"
+        content += decompressed
+
+        decompressed = decompressor.process(next(streaming_content))
+        assert decompressed == b"<html>\n"
+        content += decompressed
+
+        for chunk in streaming_content:
+            content += decompressor.process(chunk)
+
+        assert content.decode() == basic_html
+        assert decompressor.is_finished()
 
     @pytest.mark.skipif(sys.version_info < (3, 14), reason="Python 3.14+")
     def test_streaming_zstd(self):
-        from compression.zstd import decompress
+        from compression.zstd import ZstdDecompressor
 
         response = self.client.get("/streaming/", headers={"accept-encoding": "zstd"})
+
+        assert isinstance(response, StreamingHttpResponse)
+        assert not response.is_async
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "zstd"
         assert response.headers["vary"] == "accept-encoding"
-        content = response.getvalue()
-        assert content.startswith(b"(\xb5/\xfd")
-        decompressed = decompress(content)
-        assert decompressed.decode() == basic_html
+
+        streaming_content = cast(Iterator[bytes], response.streaming_content)
+        decompressor = ZstdDecompressor()
+        content = b""
+
+        decompressed = decompressor.decompress(next(streaming_content))
+        assert decompressed == b""
+        content += decompressed
+
+        decompressed = decompressor.decompress(next(streaming_content))
+        assert decompressed == b"<!doctype html>\n"
+        content += decompressed
+
+        decompressed = decompressor.decompress(next(streaming_content))
+        assert decompressed == b"<html>\n"
+        content += decompressed
+
+        for chunk in streaming_content:
+            content += decompressor.decompress(chunk)
+
+        assert decompressor.eof
+        assert decompressor.unused_data == b""
+        assert content.decode() == basic_html
 
     def test_streaming_empty_identity(self):
         response = self.client.get("/streaming/empty/")
+
         assert response.status_code == HTTPStatus.OK
         assert "content-encoding" not in response.headers
         assert "vary" not in response.headers
@@ -124,6 +208,7 @@ class HttpCompressionMiddlewareTests(SimpleTestCase):
         response = self.client.get(
             "/streaming/empty/", headers={"accept-encoding": "gzip"}
         )
+
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "gzip"
         assert response.headers["vary"] == "accept-encoding"
@@ -136,6 +221,7 @@ class HttpCompressionMiddlewareTests(SimpleTestCase):
         response = self.client.get(
             "/streaming/empty/", headers={"accept-encoding": "br"}
         )
+
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "br"
         assert response.headers["vary"] == "accept-encoding"
@@ -151,6 +237,58 @@ class HttpCompressionMiddlewareTests(SimpleTestCase):
         response = self.client.get(
             "/streaming/empty/", headers={"accept-encoding": "zstd"}
         )
+
+        assert response.status_code == HTTPStatus.OK
+        assert response.headers["content-encoding"] == "zstd"
+        assert response.headers["vary"] == "accept-encoding"
+        content = response.getvalue()
+        assert content.startswith(b"(\xb5/\xfd")
+        decompressed = decompress(content)
+        assert decompressed == b""
+
+    def test_streaming_blanks_identity(self):
+        response = self.client.get("/streaming/blanks/")
+
+        assert response.status_code == HTTPStatus.OK
+        assert "content-encoding" not in response.headers
+        assert "vary" not in response.headers
+        content = response.getvalue()
+        assert content == b""
+
+    def test_streaming_blanks_gzip(self):
+        response = self.client.get(
+            "/streaming/blanks/", headers={"accept-encoding": "gzip"}
+        )
+
+        assert response.status_code == HTTPStatus.OK
+        assert response.headers["content-encoding"] == "gzip"
+        assert response.headers["vary"] == "accept-encoding"
+        content = response.getvalue()
+        assert content.startswith(b"\x1f\x8b\x08")
+        decompressed = gzip.decompress(content)
+        assert decompressed == b""
+
+    def test_streaming_blanks_brotli(self):
+        response = self.client.get(
+            "/streaming/blanks/", headers={"accept-encoding": "br"}
+        )
+
+        assert response.status_code == HTTPStatus.OK
+        assert response.headers["content-encoding"] == "br"
+        assert response.headers["vary"] == "accept-encoding"
+        content = response.getvalue()
+        assert content == b"k\x00\x03"
+        decompressed = brotli_decompress(content)
+        assert decompressed == b""
+
+    @pytest.mark.skipif(sys.version_info < (3, 14), reason="Python 3.14+")
+    def test_streaming_blanks_zstd(self):
+        from compression.zstd import decompress
+
+        response = self.client.get(
+            "/streaming/blanks/", headers={"accept-encoding": "zstd"}
+        )
+
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "zstd"
         assert response.headers["vary"] == "accept-encoding"
@@ -263,6 +401,7 @@ class HttpCompressionMiddlewareTests(SimpleTestCase):
 
     def test_binary(self):
         response = self.client.get("/binary/", headers={"accept-encoding": "gzip"})
+
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "gzip"
         assert response.headers["vary"] == "accept-encoding"
@@ -273,6 +412,7 @@ class HttpCompressionMiddlewareTests(SimpleTestCase):
 
     def test_etag(self):
         response = self.client.get("/etag/", headers={"accept-encoding": "gzip"})
+
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "gzip"
         assert response.headers["vary"] == "accept-encoding"
