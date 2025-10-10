@@ -13,6 +13,8 @@ urlpatterns = [
     path("streaming/empty/", views.streaming_empty),
     path("streaming/blanks/", views.streaming_blanks),
     path("async/streaming/", views.async_streaming),
+    path("async/streaming/empty/", views.async_streaming_empty),
+    path("async/streaming/blanks/", views.async_streaming_blanks),
     path("binary/", views.binary),
     path("etag/", views.etag),
 ]
