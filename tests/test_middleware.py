@@ -95,7 +95,7 @@ class HttpCompressionMiddlewareTests(SimpleTestCase):
         assert response.headers["content-encoding"] == "br"
         assert response.headers["vary"] == "accept-encoding"
         content = response.getvalue()
-        assert content.startswith(b"\x1b]\x01\x00")
+        assert content.startswith(b"\x8b\x07\x00\xf8")
         decompressed = brotli_decompress(content)
         assert decompressed.decode() == basic_html
 

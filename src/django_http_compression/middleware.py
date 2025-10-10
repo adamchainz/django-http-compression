@@ -251,6 +251,7 @@ def brotli_compress_sequence(sequence: Iterator[bytes]) -> Generator[bytes]:
     compressor = BrotliCompressor()
     for item in sequence:
         data = compressor.process(item)
+        data += compressor.flush()
         if data:  # pragma: no branch
             yield data
     out = compressor.finish()
