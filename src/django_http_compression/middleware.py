@@ -208,7 +208,7 @@ def best_coding(accept_encoding: str) -> Coding:
 
 
 # Browsers send a limited set of Accept-Encoding headers, so cache parsed results
-@lru_cache
+@lru_cache(maxsize=128)
 def _best_coding(accept_encoding: str) -> Coding:
     options = []
     for part in accept_encoding.split(","):
