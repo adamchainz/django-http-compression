@@ -44,7 +44,7 @@ dependencies = [
   "typing-extensions>=4.1",
 ]
 optional-dependencies.backports-zstd = [
-    "backports-zstd>=1.0.0",
+  "backports-zstd>=1",
 ]
 optional-dependencies.brotli = [
   "brotli>=1.0.1",
