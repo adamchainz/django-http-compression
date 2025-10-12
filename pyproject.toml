@@ -46,6 +46,9 @@ dependencies = [
 optional-dependencies.brotli = [
   "brotli>=1.0.1",
 ]
+optional-dependencies.backports-zstd = [
+    "backports-zstd>=1.0.0",
+]
 urls = { Changelog = "https://github.com/adamchainz/django-http-compression/blob/main/CHANGELOG.rst", Funding = "https://adamj.eu/books/", Repository = "https://github.com/adamchainz/django-http-compression" }
 
 [dependency-groups]

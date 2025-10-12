@@ -29,7 +29,13 @@ try:
 
     HAVE_ZSTD = True
 except ImportError:
-    HAVE_ZSTD = False
+    try:
+        from backports.zstd import ZstdCompressor
+        from backports.zstd import compress as zstd_compress
+
+        HAVE_ZSTD = True
+    except ImportError:  # pragma: no cover
+        HAVE_ZSTD = False
 
 try:
     from brotli import Compressor as BrotliCompressor
