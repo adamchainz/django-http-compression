@@ -33,12 +33,9 @@ Requirements
 
 Python 3.9 to 3.14 supported.
 
-Python 3.14+ required for Zstandard support (for |compression.zstd|__).
-
-.. |compression.zstd| replace:: ``compression.zstd``
-__ https://docs.python.org/3/whatsnew/3.14.html#pep-784-zstandard-support-in-the-standard-library
-
 Django 4.2 to 6.0 supported.
+
+Zstandard support requires Python 3.14+ and the `libzstd <https://github.com/facebook/zstd>`__ system library.
 
 Installation
 ------------
