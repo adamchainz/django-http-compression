@@ -6,7 +6,7 @@ requires = [
 
 [project]
 name = "django-http-compression"
-version = "1.0.0"
+version = "1.0.1"
 description = "Django middleware for compressing HTTP responses with Zstandard, Brotli, or Gzip."
 readme = "README.rst"
 keywords = [
