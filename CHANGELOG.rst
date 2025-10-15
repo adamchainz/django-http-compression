@@ -2,13 +2,12 @@
 Changelog
 =========
 
-1.0.1 (2025-10-13)
-------------------
+Unreleased
+----------
 
-* Add support for Zstandard compression via the ``backports-zstd`` extra on Python versions ``>=3.9, <3.14``.
-  You can now optionally install this extra to enable modern compression on older Python versions.
+* Add Zstandard support on Python < 3.14 via the `backports-zstd package <https://pypi.org/project/backports-zstd/>`__.
 
-  `PR #16 <https://github.com/adamchainz/django-http-compression/pull/16>`__.
+  Thanks to Ertuğrul Keremoğlu in `PR #16 <https://github.com/adamchainz/django-http-compression/pull/16>`__.
 
 1.0.0 (2025-10-10)
 ------------------

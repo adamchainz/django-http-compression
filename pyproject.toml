@@ -6,7 +6,7 @@ requires = [
 
 [project]
 name = "django-http-compression"
-version = "1.0.1"
+version = "1.0.0"
 description = "Django middleware for compressing HTTP responses with Zstandard, Brotli, or Gzip."
 readme = "README.rst"
 keywords = [
@@ -40,11 +40,9 @@ classifiers = [
 ]
 dependencies = [
   "asgiref>=3.6",
+  "backports-zstd>=1; python_version<'3.14'",
   "django>=4.2",
   "typing-extensions>=4.1",
-]
-optional-dependencies.backports-zstd = [
-  "backports-zstd>=1",
 ]
 optional-dependencies.brotli = [
   "brotli>=1.0.1",
