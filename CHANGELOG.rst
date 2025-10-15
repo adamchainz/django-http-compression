@@ -2,8 +2,8 @@
 Changelog
 =========
 
-Unreleased
-----------
+1.1.0 (2025-10-15)
+------------------
 
 * Add Zstandard support on Python < 3.14 via the `backports-zstd package <https://pypi.org/project/backports-zstd/>`__.
 
