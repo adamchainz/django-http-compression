@@ -23,6 +23,13 @@ from django_http_compression.middleware import best_coding
 from tests.compat import anext
 from tests.views import basic_html
 
+try:
+    from compression.zstd import ZstdDecompressor
+    from compression.zstd import decompress as zstd_decompress
+except ImportError:
+    from backports.zstd import ZstdDecompressor
+    from backports.zstd import decompress as zstd_decompress
+
 
 class HttpCompressionMiddlewareTests(SimpleTestCase):
     def test_short(self):
@@ -69,17 +76,14 @@ class HttpCompressionMiddlewareTests(SimpleTestCase):
         decompressed = brotli_decompress(response.content)
         assert decompressed.decode() == basic_html
 
-    @pytest.mark.skipif(sys.version_info < (3, 14), reason="Python 3.14+")
     def test_zstd(self):
-        from compression.zstd import decompress
-
         response = self.client.get("/", headers={"accept-encoding": "zstd"})
 
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "zstd"
         assert response.headers["vary"] == "accept-encoding"
         assert response.content.startswith(b"(\xb5/\xfd")
-        decompressed = decompress(response.content)
+        decompressed = zstd_decompress(response.content)
         assert decompressed.decode() == basic_html
 
     def test_streaming_identity(self):
@@ -161,10 +165,7 @@ class HttpCompressionMiddlewareTests(SimpleTestCase):
         assert content.decode() == basic_html
         assert decompressor.is_finished()
 
-    @pytest.mark.skipif(sys.version_info < (3, 14), reason="Python 3.14+")
     def test_streaming_zstd(self):
-        from compression.zstd import ZstdDecompressor
-
         response = self.client.get("/streaming/", headers={"accept-encoding": "zstd"})
 
         assert isinstance(response, StreamingHttpResponse)
@@ -231,10 +232,7 @@ class HttpCompressionMiddlewareTests(SimpleTestCase):
         decompressed = brotli_decompress(content)
         assert decompressed == b""
 
-    @pytest.mark.skipif(sys.version_info < (3, 14), reason="Python 3.14+")
     def test_streaming_empty_zstd(self):
-        from compression.zstd import decompress
-
         response = self.client.get(
             "/streaming/empty/", headers={"accept-encoding": "zstd"}
         )
@@ -244,7 +242,7 @@ class HttpCompressionMiddlewareTests(SimpleTestCase):
         assert response.headers["vary"] == "accept-encoding"
         content = response.getvalue()
         assert content.startswith(b"(\xb5/\xfd")
-        decompressed = decompress(content)
+        decompressed = zstd_decompress(content)
         assert decompressed == b""
 
     def test_streaming_blanks_identity(self):
@@ -282,10 +280,7 @@ class HttpCompressionMiddlewareTests(SimpleTestCase):
         decompressed = brotli_decompress(content)
         assert decompressed == b""
 
-    @pytest.mark.skipif(sys.version_info < (3, 14), reason="Python 3.14+")
     def test_streaming_blanks_zstd(self):
-        from compression.zstd import decompress
-
         response = self.client.get(
             "/streaming/blanks/", headers={"accept-encoding": "zstd"}
         )
@@ -295,7 +290,7 @@ class HttpCompressionMiddlewareTests(SimpleTestCase):
         assert response.headers["vary"] == "accept-encoding"
         content = response.getvalue()
         assert content.startswith(b"(\xb5/\xfd")
-        decompressed = decompress(content)
+        decompressed = zstd_decompress(content)
         assert decompressed == b""
 
     async def test_async_identity(self):
@@ -330,10 +325,7 @@ class HttpCompressionMiddlewareTests(SimpleTestCase):
         decompressed = brotli_decompress(response.content)
         assert decompressed.decode() == basic_html
 
-    @pytest.mark.skipif(sys.version_info < (3, 14), reason="Python 3.14+")
     async def test_async_zstd(self):
-        from compression.zstd import decompress
-
         response = await self.async_client.get(
             "/async/", headers={"accept-encoding": "zstd"}
         )
@@ -342,7 +334,7 @@ class HttpCompressionMiddlewareTests(SimpleTestCase):
         assert response.headers["content-encoding"] == "zstd"
         assert response.headers["vary"] == "accept-encoding"
         assert response.content.startswith(b"(\xb5/\xfd")
-        decompressed = decompress(response.content)
+        decompressed = zstd_decompress(response.content)
         assert decompressed.decode() == basic_html
 
     async def test_async_streaming_identity(self):
@@ -428,10 +420,7 @@ class HttpCompressionMiddlewareTests(SimpleTestCase):
         assert content.decode() == basic_html
         assert decompressor.is_finished()
 
-    @pytest.mark.skipif(sys.version_info < (3, 14), reason="Python 3.14+")
     async def test_async_streaming_zstd(self):
-        from compression.zstd import ZstdDecompressor
-
         response = await self.async_client.get(
             "/async/streaming/", headers={"accept-encoding": "zstd"}
         )
@@ -513,10 +502,7 @@ class HttpCompressionMiddlewareTests(SimpleTestCase):
         decompressed = brotli_decompress(content)
         assert decompressed == b""
 
-    @pytest.mark.skipif(sys.version_info < (3, 14), reason="Python 3.14+")
     async def test_async_streaming_empty_zstd(self):
-        from compression.zstd import decompress
-
         response = await self.async_client.get(
             "/async/streaming/empty/", headers={"accept-encoding": "zstd"}
         )
@@ -530,7 +516,7 @@ class HttpCompressionMiddlewareTests(SimpleTestCase):
         content = b""
         async for chunk in streaming_content:
             content += chunk
-        decompressed = decompress(content)
+        decompressed = zstd_decompress(content)
         assert decompressed == b""
 
     async def test_async_streaming_blanks_identity(self):
@@ -581,10 +567,7 @@ class HttpCompressionMiddlewareTests(SimpleTestCase):
         decompressed = brotli_decompress(content)
         assert decompressed == b""
 
-    @pytest.mark.skipif(sys.version_info < (3, 14), reason="Python 3.14+")
     async def test_async_streaming_blanks_zstd(self):
-        from compression.zstd import decompress
-
         response = await self.async_client.get(
             "/async/streaming/blanks/", headers={"accept-encoding": "zstd"}
         )
@@ -598,7 +581,7 @@ class HttpCompressionMiddlewareTests(SimpleTestCase):
         content = b""
         async for chunk in streaming_content:
             content += chunk
-        decompressed = decompress(content)
+        decompressed = zstd_decompress(content)
         assert decompressed == b""
 
     def test_binary(self):
@@ -738,38 +721,38 @@ class BestCodingTests(ParametrizedTestCase, SimpleTestCase):
             ("br", "br"),
             ("gzip, br", "br"),
             ("br, gzip", "br"),
-            ("zstd, gzip", "zstd" if py314 else "gzip"),
-            ("gzip, zstd", "zstd" if py314 else "gzip"),
-            ("br, zstd", "zstd" if py314 else "br"),
-            ("zstd, br", "zstd" if py314 else "br"),
-            ("gzip, br, zstd", "zstd" if py314 else "br"),
-            ("zstd, br, gzip", "zstd" if py314 else "br"),
-            ("br, gzip, zstd", "zstd" if py314 else "br"),
-            ("zstd, gzip, br", "zstd" if py314 else "br"),
+            ("zstd, gzip", "zstd"),
+            ("gzip, zstd", "zstd"),
+            ("br, zstd", "zstd"),
+            ("zstd, br", "zstd"),
+            ("gzip, br, zstd", "zstd"),
+            ("zstd, br, gzip", "zstd"),
+            ("br, gzip, zstd", "zstd"),
+            ("zstd, gzip, br", "zstd"),
             # Quality values
             ("gzip;q=0", "identity"),
             ("gzip;q=whatever", "identity"),
             ("gzip;q=0.9", "gzip"),
             ("br;q=0.9", "br"),
-            ("zstd;q=0.9", "zstd" if py314 else "identity"),
+            ("zstd;q=0.9", "zstd"),
             ("gzip;q=0.5, br;q=0.9", "br"),
             ("br;q=0.5, gzip;q=0.9", "gzip"),
             ("zstd;q=0.5, gzip;q=0.9", "gzip"),
-            ("gzip;q=0.5, zstd;q=0.9", "zstd" if py314 else "gzip"),
-            ("br;q=0.5, zstd;q=0.9", "zstd" if py314 else "br"),
+            ("gzip;q=0.5, zstd;q=0.9", "zstd"),
+            ("br;q=0.5, zstd;q=0.9", "zstd"),
             ("zstd;q=0.5, br;q=0.9", "br" if py314 else "br"),
             ("zstd;q=0.5, br", "br"),
             ("gzip;q=0.9, br;q=0.5", "gzip"),
             ("br;q=0.9, gzip;q=0.5", "br"),
-            ("zstd;q=0.9, gzip;q=0.5", "zstd" if py314 else "gzip"),
+            ("zstd;q=0.9, gzip;q=0.5", "zstd"),
             ("gzip;q=0.9, zstd;q=0.5", "gzip"),
             ("br;q=0.9, zstd;q=0.5", "br"),
-            ("zstd;q=0.9, br;q=0.5", "zstd" if py314 else "br"),
+            ("zstd;q=0.9, br;q=0.5", "zstd"),
             ("gzip;q=0.8, br;q=0.9, zstd;q=0.7", "br"),
             ("br;q=0.8, gzip;q=0.9, zstd;q=0.7", "gzip"),
             ("zstd;q=0.8, gzip;q=0.9, br;q=0.7", "gzip"),
-            ("gzip;q=0.8, zstd;q=0.9, br;q=0.7", "zstd" if py314 else "gzip"),
-            ("br;q=0.8, zstd;q=0.9, gzip;q=0.7", "zstd" if py314 else "br"),
+            ("gzip;q=0.8, zstd;q=0.9, br;q=0.7", "zstd"),
+            ("br;q=0.8, zstd;q=0.9, gzip;q=0.7", "zstd"),
             ("zstd;q=0.8, br;q=0.9, gzip;q=0.7", "br"),
             # Unsupported
             ("supercompression", "identity"),
@@ -777,7 +760,7 @@ class BestCodingTests(ParametrizedTestCase, SimpleTestCase):
             ("gzip, supercompression", "gzip"),
             ("supercompression;q=0.9, gzip;q=0.8", "gzip"),
             ("gzip;q=0.9, supercompression;q=0.8", "gzip"),
-            ("zstd, gzip, supercompression", "zstd" if py314 else "gzip"),
+            ("zstd, gzip, supercompression", "zstd"),
             # Unknown parameters
             ("gzip;anything=1", "identity"),
             ("gzip;anything=1;other=2", "identity"),

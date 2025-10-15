@@ -40,6 +40,7 @@ classifiers = [
 ]
 dependencies = [
   "asgiref>=3.6",
+  "backports-zstd>=1; python_version<'3.14'",
   "django>=4.2",
   "typing-extensions>=4.1",
 ]

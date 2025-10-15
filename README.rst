@@ -33,12 +33,10 @@ Requirements
 
 Python 3.9 to 3.14 supported.
 
-Python 3.14+ required for Zstandard support (for |compression.zstd|__).
-
-.. |compression.zstd| replace:: ``compression.zstd``
-__ https://docs.python.org/3/whatsnew/3.14.html#pep-784-zstandard-support-in-the-standard-library
-
 Django 4.2 to 6.0 supported.
+
+From Python 3.14, Zstandard support requires `libzstd <https://github.com/facebook/zstd>`__ to be linked into Python.
+(uv’s Python distributions include it on Unix.)
 
 Installation
 ------------
@@ -55,8 +53,7 @@ Installation
 
       python -m pip install 'django-http-compression[brotli]'
 
-  Brotli support is recommended only on Python 3.13 and below.
-  From Python 3.14, the standard library includes Zstandard support, which is more performant than Brotli and has wide browser support.
+  Most browsers support Zstandard (`MDN <https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Encoding#browser_compatibility>`__), but you may want to include Brotli as an option for clients that do not.
 
 2. Add django-http-compression to your ``INSTALLED_APPS``:
 
