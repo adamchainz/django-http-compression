@@ -6,6 +6,10 @@ Changelog
 
   `PR #18 <https://github.com/adamchainz/django-http-compression/pull/18>`__.
 
+* Add a system check warning (``django_http_compression.W001``) when Django’s ``GZipMiddleware`` or `django-compression-middleware <https://pypi.org/project/django-compression-middleware/>`__\’s ``CompressionMiddleware`` are also in use.
+
+  `PR #19 <https://github.com/adamchainz/django-http-compression/pull/19>`__.
+
 1.1.0 (2025-10-15)
 ------------------
 
