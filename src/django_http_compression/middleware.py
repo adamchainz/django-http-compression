@@ -46,6 +46,12 @@ except ImportError:  # pragma: no cover
     HAVE_BROTLI = False
 
 
+# Copy CloudFlare’s default quality setting, to balance
+# speed versus savings.
+# https://blog.cloudflare.com/results-experimenting-brotli/
+BROTLI_QUALITY = 4
+
+
 class HttpCompressionMiddleware:
     """
     Compress content with the best-supported encoding that the client accepts.
@@ -164,10 +170,7 @@ class HttpCompressionMiddleware:
             elif coding == "br":
                 compressed_content = brotli_compress(
                     response.content,
-                    # Copy CloudFlare’s default quality setting, to balance
-                    # speed versus savings.
-                    # https://blog.cloudflare.com/results-experimenting-brotli/
-                    quality=4,
+                    quality=BROTLI_QUALITY,
                 )
             elif coding == "zstd":
                 compressed_content = zstd_compress(
@@ -312,7 +315,7 @@ def brotli_compress_sequence(sequence: Iterator[bytes]) -> Generator[bytes]:
     # Output headers
     yield b""
 
-    compressor = BrotliCompressor()
+    compressor = BrotliCompressor(quality=BROTLI_QUALITY)
     for item in sequence:
         data = compressor.process(item)
         data += compressor.flush()
