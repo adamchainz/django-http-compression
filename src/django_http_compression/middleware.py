@@ -110,8 +110,6 @@ class HttpCompressionMiddleware:
         if coding == "identity":
             return
 
-        patch_vary_headers(response, ("accept-encoding",))
-
         if response.streaming:
             response = cast(StreamingHttpResponse, response)
             if response.is_async:
@@ -181,10 +179,13 @@ class HttpCompressionMiddleware:
             else:  # pragma: no cover
                 assert_never(coding)
 
-            if len(compressed_content) >= len(response.content):  # pragma: no cover
+            if len(compressed_content) >= len(response.content):
                 return
             response.content = compressed_content
             response.headers["content-length"] = str(len(response.content))
+
+        patch_vary_headers(response, ("accept-encoding",))
+        response.headers["content-encoding"] = coding
 
         # If there is a strong ETag, make it weak to fulfill the requirements
         # of RFC 9110 Section 8.8.1 while also allowing conditional request
@@ -192,8 +193,6 @@ class HttpCompressionMiddleware:
         etag = response.headers.get("etag")
         if etag and etag.startswith('"'):
             response.headers["etag"] = "W/" + etag
-
-        response.headers["content-encoding"] = coding
 
 
 codings = MappingProxyType(

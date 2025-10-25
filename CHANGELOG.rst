@@ -6,6 +6,10 @@ Changelog
 
   `PR #18 <https://github.com/adamchainz/django-http-compression/pull/18>`__.
 
+* Avoid adding the ``Vary: Accept-Encoding`` header when compression is not used, due to it lengthening the response.
+
+  `PR #24 <https://github.com/adamchainz/django-http-compression/pull/24>`__.
+
 * Add a system check warning (``django_http_compression.W001``) when Django’s ``GZipMiddleware`` or `django-compression-middleware <https://pypi.org/project/django-compression-middleware/>`__\’s ``CompressionMiddleware`` are also in use.
 
   `PR #19 <https://github.com/adamchainz/django-http-compression/pull/19>`__.

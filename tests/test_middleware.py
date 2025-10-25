@@ -9,6 +9,7 @@ from gzip import decompress as gzip_decompress
 from http import HTTPStatus
 from textwrap import dedent
 from typing import cast
+from unittest import mock
 
 import django
 import pytest
@@ -19,6 +20,7 @@ from django.middleware import gzip as django_middleware_gzip
 from django.test import SimpleTestCase
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
+from django_http_compression import middleware
 from django_http_compression.middleware import best_coding
 from tests.compat import anext
 from tests.views import basic_html
@@ -603,6 +605,18 @@ class HttpCompressionMiddlewareTests(SimpleTestCase):
         assert response.headers["vary"] == "accept-encoding"
         assert response.headers["etag"] == 'W/"12345"'
         assert response.content.startswith(b"\x1f\x8b\x08")
+
+    def test_early_return_poor_compression(self):
+        # Nothing happens when compression results in no savings.
+        with mock.patch.object(
+            middleware, "zstd_compress", return_value=b"x" * len(basic_html) * 2
+        ):
+            response = self.client.get("/", headers={"accept-encoding": "zstd"})
+
+        assert response.status_code == HTTPStatus.OK
+        assert "content-encoding" not in response.headers
+        assert "vary" not in response.headers
+        assert response.content.decode() == basic_html
 
 
 class UpstreamSourceTests(SimpleTestCase):
