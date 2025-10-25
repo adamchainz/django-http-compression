@@ -84,8 +84,10 @@ Installation
 API
 ---
 
-``django_http_compression.middleware.HttpCompressionMiddleware``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``HttpCompressionMiddleware``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Module: ``django_http_compression.middleware``
 
 This middleware is similar to Django’s |GZipMiddleware2|__, but with extra coding support.
 It compresses responses with one of three codings, depending on what the client supports per the request’s |accept-encoding|__ header:
@@ -126,6 +128,32 @@ If the response has an ``etag`` header, the ``etag`` is made weak to comply with
 For the Gzip coding, the middleware mitigates some attacks using the *Heal the Breach (HTB)* technique, as used in Django’s ``GzipMiddleware``.
 This fix adds a small number of random bytes to each response.
 To change the maximum number of random bytes added to responses, subclass the middleware and change the ``gzip_max_random_bytes`` attribute appropriately (default 100).
+
+``@no_compression``
+^^^^^^^^^^^^^^^^^^^
+
+Module: ``django_http_compression.views.decorators``
+
+Apply this decorator to a view to skip compression on its responses.
+Some response types may not benefit from compression, such as streaming responses with many small chunks, like Server-Sent Events (SSE), so  can be a small optimization to skip HTTP compression in those cases.
+
+It adds a ``no_http_compression`` attribute to the view function, which ``HttpCompressionMiddleware`` checks for.
+
+
+
+Example usage:
+
+.. code-block:: python
+
+    from django.http import StreamingHttpResponse
+
+    from django_http_compression.views.decorators import no_compression
+
+
+    @no_compression
+    def streaming_chat(request):
+        ...
+        return StreamingHttpResponse(...)
 
 History
 -------
