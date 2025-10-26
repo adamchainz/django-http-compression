@@ -98,7 +98,7 @@ class HttpCompressionMiddleware:
 
     def maybe_compress(self, request: HttpRequest, response: HttpResponseBase) -> None:
         # It's not worth attempting to compress really short responses.
-        if isinstance(response, HttpResponse) and len(response.content) < 200:
+        if isinstance(response, HttpResponse) and len(response.content) < 50:
             return
 
         # Avoid gzipping if we've already got a content-encoding.
