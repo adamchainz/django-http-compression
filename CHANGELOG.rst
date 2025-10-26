@@ -2,6 +2,12 @@
 Changelog
 =========
 
+* Limit compression to known-compressible content types, such as ``application/json`` and all ``text/`` content types.
+  This avoids wasting resources compressing already-compressed content like images and PDFs.
+  The list of compressible content types was seede from Caddy.
+
+  `PR #26 <https://github.com/adamchainz/django-http-compression/pull/26>`__.
+
 * Use Brotli quality 4 for streaming responses as well, which is ~100 times faster than the default quality, 11.
 
   `PR #18 <https://github.com/adamchainz/django-http-compression/pull/18>`__.

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from collections.abc import (
     AsyncGenerator,
     AsyncIterator,
@@ -61,6 +62,51 @@ class HttpCompressionMiddleware:
 
     gzip_max_random_bytes = 100
 
+    # Seeded from Caddy’s default list of compressible content types
+    # https://caddyserver.com/docs/caddyfile/directives/encode
+    content_type_re = re.compile(
+        r"""
+        ^(?:
+            application/(?:
+                atom\+xml |
+                eot |
+                font |
+                geo\+json |
+                graphql\+json |
+                javascript |
+                json |
+                ld\+json |
+                manifest\+json |
+                opentype |
+                otf |
+                rss\+xml |
+                truetype |
+                ttf |
+                vnd\.api\+json |
+                vnd\.ms-fontobject |
+                wasm |
+                x-httpd-cgi |
+                x-javascript |
+                x-opentype |
+                x-otf |
+                x-perl |
+                x-protobuf |
+                x-ttf |
+                xhtml\+xml |
+                xml
+            ) |
+            font/.* |
+            image/svg\+xml |
+            image/vnd\.microsoft\.icon |
+            image/x-icon |
+            multipart/bag |
+            multipart/mixed |
+            text/.*
+        )
+    """,
+        re.VERBOSE | re.IGNORECASE,
+    )
+
     sync_capable = True
     async_capable = True
 
@@ -97,6 +143,11 @@ class HttpCompressionMiddleware:
         return response
 
     def maybe_compress(self, request: HttpRequest, response: HttpResponseBase) -> None:
+        # Only compress known-compressible content types
+        content_type = response.headers.get("content-type", "").split(";", 1)[0]
+        if not self.content_type_re.match(content_type):
+            return
+
         # It's not worth attempting to compress really short responses.
         if isinstance(response, HttpResponse) and len(response.content) < 50:
             return

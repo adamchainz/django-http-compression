@@ -34,6 +34,15 @@ def short(request: HttpRequest) -> HttpResponse:
     return HttpResponse("short")
 
 
+def random(request: HttpRequest) -> HttpResponse:
+    # 100 random characters generated with:
+    # import random, string
+    # "".join(random.choice(string.ascii_letters + string.digits) for _ in range(100))
+    return HttpResponse(
+        "l9bVXgJWtCctg6uSISfFS0O9ooKsZka2CM6uxcjTaJyha4BTw1onEcQ2XyFNscQtwGi4Q7QdYy1weyfqmzmN8a1pgIDlk7775T9u"
+    )
+
+
 def encoded(request: HttpRequest) -> HttpResponse:
     return HttpResponse(basic_html, headers={"Content-Encoding": "supercompression"})
 
