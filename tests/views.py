@@ -5,6 +5,8 @@ from pathlib import Path
 
 from django.http import FileResponse, HttpRequest, HttpResponse, StreamingHttpResponse
 
+from django_http_compression.views.decorators import no_compression
+
 basic_html = """\
 <!doctype html>
 <html>
@@ -105,3 +107,8 @@ def binary(request: HttpRequest) -> FileResponse:
 
 def etag(request: HttpRequest) -> HttpResponse:
     return HttpResponse(basic_html, headers={"ETag": '"12345"'})
+
+
+@no_compression
+def uncompressed(request: HttpRequest) -> HttpResponse:
+    return HttpResponse(basic_html)

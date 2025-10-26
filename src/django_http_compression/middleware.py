@@ -156,6 +156,10 @@ class HttpCompressionMiddleware:
         if "content-encoding" in response.headers:
             return
 
+        view = request.resolver_match
+        if view and getattr(view.func, "no_http_compression", False):
+            return
+
         accept_encoding = request.headers.get("accept-encoding", "")
         coding = best_coding(accept_encoding)
         if coding == "identity":

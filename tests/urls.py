@@ -18,4 +18,5 @@ urlpatterns = [
     path("random/", views.random),
     path("binary/", views.binary),
     path("etag/", views.etag),
+    path("uncompressed/", views.uncompressed),
 ]

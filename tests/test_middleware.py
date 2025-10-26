@@ -612,6 +612,16 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
         assert response.headers["etag"] == 'W/"12345"'
         assert response.content.startswith(b"\x1f\x8b\x08")
 
+    def test_no_compression(self):
+        response = self.client.get(
+            "/uncompressed/", headers={"accept-encoding": "gzip"}
+        )
+
+        assert response.status_code == HTTPStatus.OK
+        assert "content-encoding" not in response.headers
+        assert "vary" not in response.headers
+        assert response.content.decode() == basic_html
+
     @parametrize(
         "content_type,expected",
         [

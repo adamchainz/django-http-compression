@@ -11,6 +11,10 @@ Changelog
 
   `PR #26 <https://github.com/adamchainz/django-http-compression/pull/26>`__.
 
+* Add ``@no_compression`` decorator to mark views whose responses should not be compressed.
+
+  `PR #21 <https://github.com/adamchainz/django-http-compression/pull/21>`__.
+
 * Use Brotli quality 4 for streaming responses as well, which is ~100 times faster than the default quality, 11.
 
   `PR #18 <https://github.com/adamchainz/django-http-compression/pull/18>`__.
