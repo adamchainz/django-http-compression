@@ -2,6 +2,9 @@
 Changelog
 =========
 
+1.2.0 (2025-10-26)
+------------------
+
 * Limit compression to known-compressible content types, such as ``application/json`` and all ``text/`` content types.
   This avoids wasting resources compressing already-compressed content like images and PDFs.
   The list of compressible content types was seede from Caddy.
