@@ -19,7 +19,7 @@ from django.middleware import gzip as django_middleware_gzip
 from django.test import SimpleTestCase
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
-from django_http_compression.middleware import best_coding
+from django_http_compression.middleware import HttpCompressionMiddleware, best_coding
 from tests.compat import anext
 from tests.views import basic_html
 
@@ -31,7 +31,7 @@ except ImportError:
     from backports.zstd import decompress as zstd_decompress
 
 
-class HttpCompressionMiddlewareTests(SimpleTestCase):
+class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
     def test_short(self):
         response = self.client.get("/short/", headers={"accept-encoding": "gzip"})
 
@@ -584,16 +584,24 @@ class HttpCompressionMiddlewareTests(SimpleTestCase):
         decompressed = zstd_decompress(content)
         assert decompressed == b""
 
+    def test_random(self):
+        # Random data does not compress well, so it’s left uncompressed
+        response = self.client.get("/random/", headers={"accept-encoding": "gzip"})
+
+        assert response.status_code == HTTPStatus.OK
+        assert "content-encoding" not in response.headers
+        assert response.headers["vary"] == "accept-encoding"
+        content = response.getvalue()
+        assert len(content) == 100
+
     def test_binary(self):
         response = self.client.get("/binary/", headers={"accept-encoding": "gzip"})
 
         assert response.status_code == HTTPStatus.OK
-        assert response.headers["content-encoding"] == "gzip"
-        assert response.headers["vary"] == "accept-encoding"
+        assert "content-encoding" not in response.headers
+        assert "vary" not in response.headers
         content = response.getvalue()
-        assert content.startswith(b"\x1f\x8b\x08")
-        decompressed = gzip.decompress(content)
-        assert decompressed.startswith(b"\x89PNG\r\n\x1a\n")
+        assert content.startswith(b"\x89PNG\r\n\x1a\n")
 
     def test_etag(self):
         response = self.client.get("/etag/", headers={"accept-encoding": "gzip"})
@@ -603,6 +611,63 @@ class HttpCompressionMiddlewareTests(SimpleTestCase):
         assert response.headers["vary"] == "accept-encoding"
         assert response.headers["etag"] == 'W/"12345"'
         assert response.content.startswith(b"\x1f\x8b\x08")
+
+    @parametrize(
+        "content_type,expected",
+        [
+            # All types that should match
+            ("application/atom+xml", True),
+            ("application/eot", True),
+            ("application/font", True),
+            ("application/geo+json", True),
+            ("application/graphql+json", True),
+            ("application/javascript", True),
+            ("application/json", True),
+            ("application/ld+json", True),
+            ("application/manifest+json", True),
+            ("application/opentype", True),
+            ("application/otf", True),
+            ("application/rss+xml", True),
+            ("application/truetype", True),
+            ("application/ttf", True),
+            (r"application/vnd.api+json", True),
+            (r"application/vnd.ms-fontobject", True),
+            ("application/wasm", True),
+            ("application/x-httpd-cgi", True),
+            ("application/x-javascript", True),
+            ("application/x-opentype", True),
+            ("application/x-otf", True),
+            ("application/x-perl", True),
+            ("application/x-protobuf", True),
+            ("application/x-ttf", True),
+            ("application/xhtml+xml", True),
+            ("application/xml", True),
+            ("font/woff2", True),
+            ("image/svg+xml", True),
+            ("image/vnd.microsoft.icon", True),
+            ("image/x-icon", True),
+            ("multipart/bag", True),
+            ("multipart/mixed", True),
+            ("text/css", True),
+            ("text/csv", True),
+            ("text/html", True),
+            ("text/plain", True),
+            ("text/whatever", True),
+            # Check case-insensitivity
+            ("TEXT/HTML", True),
+            ("TeXt/HtMl", True),
+            # Binary types
+            ("application/gzip", False),
+            ("application/octet-stream", False),
+            ("application/zip", False),
+            ("image/jpeg", False),
+            ("image/png", False),
+            ("video/mp4", False),
+        ],
+    )
+    def test_content_type_re(self, content_type: str, expected: bool) -> None:
+        match = HttpCompressionMiddleware.content_type_re.match(content_type)
+        assert bool(match) == expected
 
 
 class UpstreamSourceTests(SimpleTestCase):
