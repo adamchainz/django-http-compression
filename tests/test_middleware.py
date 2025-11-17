@@ -20,7 +20,6 @@ from django.test import SimpleTestCase
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
 from django_http_compression.middleware import HttpCompressionMiddleware, best_coding
-from tests.compat import anext
 from tests.views import basic_html
 
 try:
@@ -464,8 +463,12 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
         assert "vary" not in response.headers
         streaming_content = cast(AsyncIterator[bytes], response.streaming_content)
         content = b""
-        async for chunk in streaming_content:
-            content += chunk
+        try:
+            await anext(streaming_content)
+        except StopAsyncIteration:
+            pass
+        else:  # pragma: no cover
+            raise AssertionError("Expected StopAsyncIteration")
         assert content == b""
 
     async def test_async_streaming_empty_gzip(self):

@@ -5,13 +5,14 @@ from collections.abc import (
     AsyncGenerator,
     AsyncIterator,
     Awaitable,
+    Callable,
     Generator,
     Iterator,
 )
 from functools import lru_cache, partial
 from gzip import GzipFile
 from types import MappingProxyType
-from typing import Callable, Literal, cast
+from typing import Literal, cast
 
 from asgiref.sync import iscoroutinefunction, markcoroutinefunction
 from django.http import HttpRequest, HttpResponse, StreamingHttpResponse
