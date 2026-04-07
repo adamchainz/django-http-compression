@@ -2,6 +2,9 @@
 Changelog
 =========
 
+1.3.0 (2026-04-08)
+------------------
+
 * Use Brotli quality level 4 for asynchronous streaming responses.
   The previous fix in version 1.2.0 only affected synchronous streaming responses.
 
