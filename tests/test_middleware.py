@@ -780,7 +780,13 @@ class BestCodingTests(ParametrizedTestCase, SimpleTestCase):
             ("*;q=0.9", "identity"),
             ("*;q=1", "identity"),
             ("*;q=garbage", "identity"),
-            ("*;q=,gzip", "identity"),
+            ("*;q=,gzip", "gzip"),
+            # Star with others
+            ("gzip, *", "gzip"),
+            ("zstd, *", "zstd"),
+            ("gzip, br, *", "br"),
+            ("gzip;q=0.5, *", "gzip"),
+            ("gzip, *;q=0", "gzip"),
             # Supported
             ("gzip", "gzip"),
             ("br", "br"),

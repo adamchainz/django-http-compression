@@ -293,7 +293,7 @@ def _parse_part(
         return (1.0, preference, cast(Coding, part))
 
     if part.startswith("*"):
-        return (1.0, -1, "identity")
+        return None
 
     if ";" in part:
         coding, params = part.split(";", 1)
