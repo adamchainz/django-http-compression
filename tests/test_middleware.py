@@ -26,8 +26,8 @@ try:
     from compression.zstd import ZstdDecompressor
     from compression.zstd import decompress as zstd_decompress
 except ImportError:
-    from backports.zstd import ZstdDecompressor
-    from backports.zstd import decompress as zstd_decompress
+    from backports.zstd import ZstdDecompressor  # type: ignore [no-redef]
+    from backports.zstd import decompress as zstd_decompress  # type: ignore [no-redef]
 
 
 class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
