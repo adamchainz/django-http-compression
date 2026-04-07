@@ -378,7 +378,7 @@ async def brotli_compress_sequence_async(
     # Output headers
     yield b""
 
-    compressor = BrotliCompressor()
+    compressor = BrotliCompressor(quality=BROTLI_QUALITY)
     async for item in sequence:
         data = compressor.process(item)
         data += compressor.flush()
