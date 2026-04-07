@@ -7,6 +7,10 @@ Changelog
 
   `PR #46 <https://github.com/adamchainz/django-http-compression/pull/46>`__.
 
+* Excluded ``font/woff`` and ``font/woff2`` from compressible content types, since these formats are already internally compressed.
+
+  `PR #47 <https://github.com/adamchainz/django-http-compression/pull/47>`__.
+
 * Drop Python 3.9 support.
 
 1.2.0 (2025-10-26)
