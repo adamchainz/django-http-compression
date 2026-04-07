@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import sys
 from collections.abc import (
     AsyncGenerator,
     AsyncIterator,
@@ -25,19 +26,12 @@ from django.utils.text import (  # type: ignore [attr-defined]
 from django.utils.text import compress_string as gzip_compress
 from typing_extensions import assert_never
 
-try:
+if sys.version_info >= (3, 14):
     from compression.zstd import ZstdCompressor
     from compression.zstd import compress as zstd_compress
-
-    HAVE_ZSTD = True
-except ImportError:
-    try:
-        from backports.zstd import ZstdCompressor
-        from backports.zstd import compress as zstd_compress
-
-        HAVE_ZSTD = True
-    except ImportError:  # pragma: no cover
-        HAVE_ZSTD = False
+else:
+    from backports.zstd import ZstdCompressor
+    from backports.zstd import compress as zstd_compress
 
 try:
     from brotli import Compressor as BrotliCompressor
@@ -250,7 +244,7 @@ class HttpCompressionMiddleware:
 
 codings = MappingProxyType(
     {
-        **({"zstd": 0} if HAVE_ZSTD else {}),
+        "zstd": 0,
         **({"br": 1} if HAVE_BROTLI else {}),
         "gzip": 2,
         "identity": 3,
