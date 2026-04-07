@@ -2,6 +2,11 @@
 Changelog
 =========
 
+* Use Brotli quality level 4 for asynchronous streaming responses.
+  The previous fix in version 1.2.0 only affected synchronous streaming responses.
+
+  `PR #46 <https://github.com/adamchainz/django-http-compression/pull/46>`__.
+
 * Drop Python 3.9 support.
 
 1.2.0 (2025-10-26)
