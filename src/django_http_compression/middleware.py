@@ -90,7 +90,7 @@ class HttpCompressionMiddleware:
                 xhtml\+xml |
                 xml
             ) |
-            font/.* |
+            font/(?!woff).* |
             image/svg\+xml |
             image/vnd\.microsoft\.icon |
             image/x-icon |
