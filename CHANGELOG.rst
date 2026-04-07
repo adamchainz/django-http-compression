@@ -11,6 +11,10 @@ Changelog
 
   `PR #47 <https://github.com/adamchainz/django-http-compression/pull/47>`__.
 
+* Fix ``*`` in ``accept-encoding`` header overriding explicitly listed encodings.
+
+  `PR #48 <https://github.com/adamchainz/django-http-compression/pull/48>`__.
+
 * Drop Python 3.9 support.
 
 1.2.0 (2025-10-26)
