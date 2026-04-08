@@ -96,11 +96,11 @@ __ https://docs.djangoproject.com/en/stable/ref/middleware/#django.middleware.gz
 .. |accept-encoding| replace:: ``Accept-Encoding``
 __ https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Encoding
 
-* Zstandard (``zstd``) - on Python 3.14+.
+* Zstandard (``zstd``).
 
-* Brotli (``br``) - if the ``brotli`` extra is installed.
+* Brotli (``br``), if the ``brotli`` extra is installed.
 
-* Gzip (``gzip``)
+* Gzip (``gzip``).
 
 See |the MDN content-encoding documentation|__ for more details on these codings and their browser support.
 
@@ -111,7 +111,7 @@ Codings are prioritized based on any ``q`` factors sent by the client, for examp
 After that, the middleware prefers the algorithms in the order of the above list, with Zstandard being the most preferred.
 This is because it’s the most performant, offering similar compression to Brotli in about half the time (per `CloudFlare’s testing <https://blog.cloudflare.com/new-standards/#introducing-zstandard-compression>`__).
 
-In practice, modern browsers do not send ``q`` factors and nearly all support Zstandard, so that will generally be selected (on Python 3.14+).
+In practice, modern browsers do not send ``q`` factors and nearly all support Zstandard, so that will generally be selected.
 
 The middleware skips compression if any of the following are true:
 
