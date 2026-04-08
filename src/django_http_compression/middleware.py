@@ -12,6 +12,7 @@ from collections.abc import (
 )
 from functools import lru_cache, partial
 from gzip import GzipFile
+from secrets import randbelow, token_urlsafe
 from types import MappingProxyType
 from typing import Literal, cast
 
@@ -19,10 +20,7 @@ from asgiref.sync import iscoroutinefunction, markcoroutinefunction
 from django.http import HttpRequest, HttpResponse, StreamingHttpResponse
 from django.http.response import HttpResponseBase
 from django.utils.cache import patch_vary_headers
-from django.utils.text import (  # type: ignore [attr-defined]
-    StreamingBuffer,
-    _get_random_filename,
-)
+from django.utils.text import StreamingBuffer
 from django.utils.text import compress_string as gzip_compress
 from typing_extensions import assert_never
 
@@ -55,7 +53,7 @@ class HttpCompressionMiddleware:
     on the Accept-Encoding header.
     """
 
-    gzip_max_random_bytes = 100
+    max_random_bytes = 99
 
     # Seeded from Caddy’s default list of compressible content types
     # https://caddyserver.com/docs/caddyfile/directives/encode
@@ -169,7 +167,6 @@ class HttpCompressionMiddleware:
                     compressed_wrapper = partial(
                         gzip_compress_sequence_async,
                         streaming_content,
-                        max_random_bytes=self.gzip_max_random_bytes,
                     )
 
                 elif coding == "br":
@@ -189,8 +186,7 @@ class HttpCompressionMiddleware:
             else:
                 if coding == "gzip":
                     response.streaming_content = gzip_compress_sequence(
-                        response.streaming_content,  # type: ignore [arg-type]
-                        max_random_bytes=self.gzip_max_random_bytes,
+                        response.streaming_content  # type: ignore [arg-type]
                     )
                 elif coding == "br":
                     response.streaming_content = brotli_compress_sequence(
@@ -209,10 +205,7 @@ class HttpCompressionMiddleware:
             response = cast(HttpResponse, response)
             # Return the compressed content only if it's actually shorter.
             if coding == "gzip":
-                compressed_content = gzip_compress(
-                    response.content,
-                    max_random_bytes=self.gzip_max_random_bytes,
-                )
+                compressed_content = gzip_compress(response.content, max_random_bytes=0)
             elif coding == "br":
                 compressed_content = brotli_compress(
                     response.content,
@@ -231,6 +224,12 @@ class HttpCompressionMiddleware:
                 return
             response.content = compressed_content
             response.headers["content-length"] = str(len(response.content))
+
+        # BREACH mitigation: add a padding header of random length
+        if self.max_random_bytes:
+            response.headers["x-noise"] = token_urlsafe(
+                randbelow(self.max_random_bytes + 1)
+            )
 
         # If there is a strong ETag, make it weak to fulfill the requirements
         # of RFC 9110 Section 8.8.1 while also allowing conditional request
@@ -312,17 +311,14 @@ def _parse_part(
     return None
 
 
-def gzip_compress_sequence(
-    sequence: Iterator[bytes], *, max_random_bytes: int
-) -> Generator[bytes]:
+def gzip_compress_sequence(sequence: Iterator[bytes]) -> Generator[bytes]:
     """
     Copy of Django’s compress_sequence() but with streaming response flushing
-    bug fixed.
+    bug fixed and random bytes feature removed in favour of x-pad header.
     """
     buf = StreamingBuffer()
-    filename = _get_random_filename(max_random_bytes) if max_random_bytes else None
     with GzipFile(
-        filename=filename, mode="wb", compresslevel=6, fileobj=buf, mtime=0
+        filename=None, mode="wb", compresslevel=6, fileobj=buf, mtime=0
     ) as zfile:
         # Output headers...
         yield b""  # Optimization
@@ -336,15 +332,14 @@ def gzip_compress_sequence(
 
 
 async def gzip_compress_sequence_async(
-    sequence: AsyncIterator[bytes], *, max_random_bytes: int
+    sequence: AsyncIterator[bytes],
 ) -> AsyncGenerator[bytes]:
     """
     Fixed version of Django's gzip_wrapper().
     """
     buf = StreamingBuffer()
-    filename = _get_random_filename(max_random_bytes) if max_random_bytes else None
     with GzipFile(
-        filename=filename, mode="wb", compresslevel=6, fileobj=buf, mtime=0
+        filename=None, mode="wb", compresslevel=6, fileobj=buf, mtime=0
     ) as zfile:
         # Output headers...
         yield b""  # Optimization

@@ -61,6 +61,7 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "gzip"
         assert response.headers["vary"] == "accept-encoding"
+        assert 0 <= len(response.headers["x-noise"]) <= 132
         assert response.content.startswith(b"\x1f\x8b\x08")
         decompressed = gzip_decompress(response.content)
         assert decompressed.decode() == basic_html
@@ -71,6 +72,7 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "br"
         assert response.headers["vary"] == "accept-encoding"
+        assert 0 <= len(response.headers["x-noise"]) <= 132
         assert response.content.startswith(b"\x1b]\x01\x00")
         decompressed = brotli_decompress(response.content)
         assert decompressed.decode() == basic_html
@@ -81,6 +83,7 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "zstd"
         assert response.headers["vary"] == "accept-encoding"
+        assert 0 <= len(response.headers["x-noise"]) <= 132
         assert response.content.startswith(b"(\xb5/\xfd")
         decompressed = zstd_decompress(response.content)
         assert decompressed.decode() == basic_html
@@ -111,6 +114,7 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "gzip"
         assert response.headers["vary"] == "accept-encoding"
+        assert 0 <= len(response.headers["x-noise"]) <= 132
 
         decompressor = zlib.decompressobj(zlib.MAX_WBITS | 16)  # gzip decoding
         content = b""
@@ -141,6 +145,7 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "br"
         assert response.headers["vary"] == "accept-encoding"
+        assert 0 <= len(response.headers["x-noise"]) <= 132
 
         streaming_content = cast(Iterator[bytes], response.streaming_content)
         decompressor = BrotliDecompressor()
@@ -172,6 +177,7 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "zstd"
         assert response.headers["vary"] == "accept-encoding"
+        assert 0 <= len(response.headers["x-noise"]) <= 132
 
         streaming_content = cast(Iterator[bytes], response.streaming_content)
         decompressor = ZstdDecompressor()
@@ -213,6 +219,7 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "gzip"
         assert response.headers["vary"] == "accept-encoding"
+        assert 0 <= len(response.headers["x-noise"]) <= 132
         content = response.getvalue()
         assert content.startswith(b"\x1f\x8b\x08")
         decompressed = gzip.decompress(content)
@@ -226,6 +233,7 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "br"
         assert response.headers["vary"] == "accept-encoding"
+        assert 0 <= len(response.headers["x-noise"]) <= 132
         content = response.getvalue()
         assert content == b";"
         decompressed = brotli_decompress(content)
@@ -239,6 +247,7 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "zstd"
         assert response.headers["vary"] == "accept-encoding"
+        assert 0 <= len(response.headers["x-noise"]) <= 132
         content = response.getvalue()
         assert content.startswith(b"(\xb5/\xfd")
         decompressed = zstd_decompress(content)
@@ -261,6 +270,7 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "gzip"
         assert response.headers["vary"] == "accept-encoding"
+        assert 0 <= len(response.headers["x-noise"]) <= 132
         content = response.getvalue()
         assert content.startswith(b"\x1f\x8b\x08")
         decompressed = gzip.decompress(content)
@@ -274,6 +284,7 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "br"
         assert response.headers["vary"] == "accept-encoding"
+        assert 0 <= len(response.headers["x-noise"]) <= 132
         content = response.getvalue()
         assert content == b"k\x00\x03"
         decompressed = brotli_decompress(content)
@@ -287,6 +298,7 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "zstd"
         assert response.headers["vary"] == "accept-encoding"
+        assert 0 <= len(response.headers["x-noise"]) <= 132
         content = response.getvalue()
         assert content.startswith(b"(\xb5/\xfd")
         decompressed = zstd_decompress(content)
@@ -308,6 +320,7 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "gzip"
         assert response.headers["vary"] == "accept-encoding"
+        assert 0 <= len(response.headers["x-noise"]) <= 132
         assert response.content.startswith(b"\x1f\x8b\x08")
         decompressed = gzip_decompress(response.content)
         assert decompressed.decode() == basic_html
@@ -320,6 +333,7 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "br"
         assert response.headers["vary"] == "accept-encoding"
+        assert 0 <= len(response.headers["x-noise"]) <= 132
         assert response.content.startswith(b"\x1b]\x01\x00")
         decompressed = brotli_decompress(response.content)
         assert decompressed.decode() == basic_html
@@ -332,6 +346,7 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "zstd"
         assert response.headers["vary"] == "accept-encoding"
+        assert 0 <= len(response.headers["x-noise"]) <= 132
         assert response.content.startswith(b"(\xb5/\xfd")
         decompressed = zstd_decompress(response.content)
         assert decompressed.decode() == basic_html
@@ -364,6 +379,7 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "gzip"
         assert response.headers["vary"] == "accept-encoding"
+        assert 0 <= len(response.headers["x-noise"]) <= 132
 
         decompressor = zlib.decompressobj(zlib.MAX_WBITS | 16)  # gzip decoding
         content = b""
@@ -396,6 +412,7 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "br"
         assert response.headers["vary"] == "accept-encoding"
+        assert 0 <= len(response.headers["x-noise"]) <= 132
 
         streaming_content = cast(AsyncIterator[bytes], response.streaming_content)
         decompressor = BrotliDecompressor()
@@ -429,6 +446,7 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "zstd"
         assert response.headers["vary"] == "accept-encoding"
+        assert 0 <= len(response.headers["x-noise"]) <= 132
 
         streaming_content = cast(AsyncIterator[bytes], response.streaming_content)
         decompressor = ZstdDecompressor()
@@ -481,6 +499,7 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "gzip"
         assert response.headers["vary"] == "accept-encoding"
+        assert 0 <= len(response.headers["x-noise"]) <= 132
         streaming_content = cast(AsyncIterator[bytes], response.streaming_content)
         content = b""
         async for chunk in streaming_content:
@@ -498,6 +517,7 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "br"
         assert response.headers["vary"] == "accept-encoding"
+        assert 0 <= len(response.headers["x-noise"]) <= 132
         streaming_content = cast(AsyncIterator[bytes], response.streaming_content)
         content = b""
         async for chunk in streaming_content:
@@ -515,6 +535,7 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "zstd"
         assert response.headers["vary"] == "accept-encoding"
+        assert 0 <= len(response.headers["x-noise"]) <= 132
         streaming_content = cast(AsyncIterator[bytes], response.streaming_content)
         content = b""
         async for chunk in streaming_content:
@@ -546,6 +567,7 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "gzip"
         assert response.headers["vary"] == "accept-encoding"
+        assert 0 <= len(response.headers["x-noise"]) <= 132
         streaming_content = cast(AsyncIterator[bytes], response.streaming_content)
         content = b""
         async for chunk in streaming_content:
@@ -563,6 +585,7 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "br"
         assert response.headers["vary"] == "accept-encoding"
+        assert 0 <= len(response.headers["x-noise"]) <= 132
         streaming_content = cast(AsyncIterator[bytes], response.streaming_content)
         content = b""
         async for chunk in streaming_content:
@@ -580,6 +603,7 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "zstd"
         assert response.headers["vary"] == "accept-encoding"
+        assert 0 <= len(response.headers["x-noise"]) <= 132
         streaming_content = cast(AsyncIterator[bytes], response.streaming_content)
         content = b""
         async for chunk in streaming_content:
@@ -612,6 +636,7 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "gzip"
         assert response.headers["vary"] == "accept-encoding"
+        assert 0 <= len(response.headers["x-noise"]) <= 132
         assert response.headers["etag"] == 'W/"12345"'
         assert response.content.startswith(b"\x1f\x8b\x08")
 
