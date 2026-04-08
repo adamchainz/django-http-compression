@@ -9,6 +9,7 @@ from gzip import decompress as gzip_decompress
 from http import HTTPStatus
 from textwrap import dedent
 from typing import cast
+from unittest import mock
 
 import django
 import pytest
@@ -639,6 +640,15 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
         assert 0 <= len(response.headers["x-noise"]) <= 132
         assert response.headers["etag"] == 'W/"12345"'
         assert response.content.startswith(b"\x1f\x8b\x08")
+
+    def test_random_bytes_disabled(self):
+        with mock.patch.object(HttpCompressionMiddleware, "max_random_bytes", 0):
+            response = self.client.get("/", headers={"accept-encoding": "gzip"})
+
+        assert response.status_code == HTTPStatus.OK
+        assert response.headers["content-encoding"] == "gzip"
+        assert response.headers["vary"] == "accept-encoding"
+        assert "x-noise" not in response.headers
 
     @parametrize(
         "content_type,expected",
