@@ -2,6 +2,9 @@
 Changelog
 =========
 
+1.4.0 (2026-04-08)
+------------------
+
 * Expand the **Heal the Breach mitigation** to all encodings, rather than just Gzip (as previously copied from Django).
   This is done by setting an ``x-noise`` header on all compressed responses, which contains a random token of between 0 and 99 bytes, Base64-encoded.
 
