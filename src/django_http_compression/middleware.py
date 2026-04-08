@@ -314,7 +314,7 @@ def _parse_part(
 def gzip_compress_sequence(sequence: Iterator[bytes]) -> Generator[bytes]:
     """
     Copy of Django’s compress_sequence() but with streaming response flushing
-    bug fixed and random bytes feature removed in favour of x-pad header.
+    bug fixed and random bytes feature removed in favour of x-noise header.
     """
     buf = StreamingBuffer()
     with GzipFile(
@@ -335,7 +335,8 @@ async def gzip_compress_sequence_async(
     sequence: AsyncIterator[bytes],
 ) -> AsyncGenerator[bytes]:
     """
-    Fixed version of Django's gzip_wrapper().
+    Fixed version of Django's gzip_wrapper(), and with random bytes feature
+    removed in favour of x-noise header.
     """
     buf = StreamingBuffer()
     with GzipFile(
