@@ -123,9 +123,10 @@ The middleware skips compression if any of the following are true:
 
 If the response has an ``etag`` header, the ``etag`` is made weak to comply with `RFC 9110 Section 8.8.1 <https://datatracker.ietf.org/doc/html/rfc9110.html#section-8.8.1>`__.
 
-For the Gzip coding, the middleware mitigates some attacks using the *Heal the Breach (HTB)* technique, as used in Django’s ``GzipMiddleware``.
-This fix adds a small number of random bytes to each response.
-To change the maximum number of random bytes added to responses, subclass the middleware and change the ``gzip_max_random_bytes`` attribute appropriately (default 100).
+The middleware mitigates some attacks using the `Heal the Breach (HTB) technique <https://ieeexplore.ieee.org/document/9754554>`__, like Django’s ``GzipMiddleware`` does.
+This technique adds some random padding to responses: an ``x-noise`` header with a random token containing between 0 and 99 bytes long, Base64-encoded.
+This padding makes it much harder for attackers to infer the contents of the response by measuring its compressed size while modifying some input, for example by trying to guess an embedded session token character-by-character.
+To change the maximum number of random bytes added to responses, subclass the middleware and set the ``max_random_bytes`` attribute.
 
 History
 -------
