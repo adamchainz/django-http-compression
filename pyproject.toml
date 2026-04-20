@@ -51,7 +51,7 @@ urls = { Changelog = "https://github.com/adamchainz/django-http-compression/blob
 [dependency-groups]
 test = [
   "coverage[toml]",
-  "pytest",
+  "pytest>=9",
   "pytest-django",
   "pytest-randomly",
   "unittest-parametrize>=1.8",
@@ -126,13 +126,9 @@ warn_unreachable = true
 overrides = [ { module = "tests.*", allow_untyped_defs = true } ]
 
 [tool.pytest]
-ini_options.addopts = """\
-    --strict-config
-    --strict-markers
-    --ds=tests.settings
-    """
-ini_options.django_find_project = false
-ini_options.xfail_strict = true
+strict = true
+django_find_project = false
+DJANGO_SETTINGS_MODULE = "tests.settings"
 
 [tool.coverage]
 run.branch = true
