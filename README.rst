@@ -33,7 +33,7 @@ Requirements
 
 Python 3.10 to 3.14 supported.
 
-Django 4.2 to 6.0 supported.
+Django 5.2 to 6.0 supported.
 
 From Python 3.14, Zstandard support requires `libzstd <https://github.com/facebook/zstd>`__ to be linked into Python.
 (uv’s Python distributions include it on Unix.)

@@ -55,5 +55,5 @@ repos:
   hooks:
   - id: mypy
     additional_dependencies:
-    - django-stubs==5.1.2
+    - django-stubs==6.0.5
     - unittest-parametrize==1.8.0
