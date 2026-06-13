@@ -92,8 +92,8 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
     def test_streaming_identity(self):
         response = self.client.get("/streaming/")
 
-        assert isinstance(response, StreamingHttpResponse)
-        assert not response.is_async
+        assert isinstance(response, StreamingHttpResponse)  # type: ignore[unreachable]
+        assert not response.is_async  # type: ignore[unreachable]
         assert response.status_code == HTTPStatus.OK
         assert "content-encoding" not in response.headers
         assert "vary" not in response.headers
@@ -110,8 +110,8 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
     def test_streaming_gzip(self):
         response = self.client.get("/streaming/", headers={"accept-encoding": "gzip"})
 
-        assert isinstance(response, StreamingHttpResponse)
-        assert not response.is_async
+        assert isinstance(response, StreamingHttpResponse)  # type: ignore[unreachable]
+        assert not response.is_async  # type: ignore[unreachable]
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "gzip"
         assert response.headers["vary"] == "accept-encoding"
@@ -141,8 +141,8 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
     def test_streaming_brotli(self):
         response = self.client.get("/streaming/", headers={"accept-encoding": "br"})
 
-        assert isinstance(response, StreamingHttpResponse)
-        assert not response.is_async
+        assert isinstance(response, StreamingHttpResponse)  # type: ignore[unreachable]
+        assert not response.is_async  # type: ignore[unreachable]
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "br"
         assert response.headers["vary"] == "accept-encoding"
@@ -173,8 +173,8 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
     def test_streaming_zstd(self):
         response = self.client.get("/streaming/", headers={"accept-encoding": "zstd"})
 
-        assert isinstance(response, StreamingHttpResponse)
-        assert not response.is_async
+        assert isinstance(response, StreamingHttpResponse)  # type: ignore[unreachable]
+        assert not response.is_async  # type: ignore[unreachable]
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "zstd"
         assert response.headers["vary"] == "accept-encoding"
@@ -355,8 +355,8 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
     async def test_async_streaming_identity(self):
         response = await self.async_client.get("/async/streaming/")
 
-        assert isinstance(response, StreamingHttpResponse)
-        assert response.is_async
+        assert isinstance(response, StreamingHttpResponse)  # type: ignore[unreachable]
+        assert response.is_async  # type: ignore[unreachable]
         assert response.status_code == HTTPStatus.OK
         assert "content-encoding" not in response.headers
         assert "vary" not in response.headers
@@ -375,8 +375,8 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
             "/async/streaming/", headers={"accept-encoding": "gzip"}
         )
 
-        assert isinstance(response, StreamingHttpResponse)
-        assert response.is_async
+        assert isinstance(response, StreamingHttpResponse)  # type: ignore[unreachable]
+        assert response.is_async  # type: ignore[unreachable]
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "gzip"
         assert response.headers["vary"] == "accept-encoding"
@@ -408,8 +408,8 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
             "/async/streaming/", headers={"accept-encoding": "br"}
         )
 
-        assert isinstance(response, StreamingHttpResponse)
-        assert response.is_async
+        assert isinstance(response, StreamingHttpResponse)  # type: ignore[unreachable]
+        assert response.is_async  # type: ignore[unreachable]
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "br"
         assert response.headers["vary"] == "accept-encoding"
@@ -442,8 +442,8 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
             "/async/streaming/", headers={"accept-encoding": "zstd"}
         )
 
-        assert isinstance(response, StreamingHttpResponse)
-        assert response.is_async
+        assert isinstance(response, StreamingHttpResponse)  # type: ignore[unreachable]
+        assert response.is_async  # type: ignore[unreachable]
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "zstd"
         assert response.headers["vary"] == "accept-encoding"
@@ -475,8 +475,8 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
     async def test_async_streaming_empty_identity(self):
         response = await self.async_client.get("/async/streaming/empty/")
 
-        assert isinstance(response, StreamingHttpResponse)
-        assert response.is_async
+        assert isinstance(response, StreamingHttpResponse)  # type: ignore[unreachable]
+        assert response.is_async  # type: ignore[unreachable]
         assert response.status_code == HTTPStatus.OK
         assert "content-encoding" not in response.headers
         assert "vary" not in response.headers
@@ -495,8 +495,8 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
             "/async/streaming/empty/", headers={"accept-encoding": "gzip"}
         )
 
-        assert isinstance(response, StreamingHttpResponse)
-        assert response.is_async
+        assert isinstance(response, StreamingHttpResponse)  # type: ignore[unreachable]
+        assert response.is_async  # type: ignore[unreachable]
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "gzip"
         assert response.headers["vary"] == "accept-encoding"
@@ -513,8 +513,8 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
             "/async/streaming/empty/", headers={"accept-encoding": "br"}
         )
 
-        assert isinstance(response, StreamingHttpResponse)
-        assert response.is_async
+        assert isinstance(response, StreamingHttpResponse)  # type: ignore[unreachable]
+        assert response.is_async  # type: ignore[unreachable]
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "br"
         assert response.headers["vary"] == "accept-encoding"
@@ -531,8 +531,8 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
             "/async/streaming/empty/", headers={"accept-encoding": "zstd"}
         )
 
-        assert isinstance(response, StreamingHttpResponse)
-        assert response.is_async
+        assert isinstance(response, StreamingHttpResponse)  # type: ignore[unreachable]
+        assert response.is_async  # type: ignore[unreachable]
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "zstd"
         assert response.headers["vary"] == "accept-encoding"
@@ -547,8 +547,8 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
     async def test_async_streaming_blanks_identity(self):
         response = await self.async_client.get("/async/streaming/blanks/")
 
-        assert isinstance(response, StreamingHttpResponse)
-        assert response.is_async
+        assert isinstance(response, StreamingHttpResponse)  # type: ignore[unreachable]
+        assert response.is_async  # type: ignore[unreachable]
         assert response.status_code == HTTPStatus.OK
         assert "content-encoding" not in response.headers
         assert "vary" not in response.headers
@@ -563,8 +563,8 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
             "/async/streaming/blanks/", headers={"accept-encoding": "gzip"}
         )
 
-        assert isinstance(response, StreamingHttpResponse)
-        assert response.is_async
+        assert isinstance(response, StreamingHttpResponse)  # type: ignore[unreachable]
+        assert response.is_async  # type: ignore[unreachable]
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "gzip"
         assert response.headers["vary"] == "accept-encoding"
@@ -581,8 +581,8 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
             "/async/streaming/blanks/", headers={"accept-encoding": "br"}
         )
 
-        assert isinstance(response, StreamingHttpResponse)
-        assert response.is_async
+        assert isinstance(response, StreamingHttpResponse)  # type: ignore[unreachable]
+        assert response.is_async  # type: ignore[unreachable]
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "br"
         assert response.headers["vary"] == "accept-encoding"
@@ -599,8 +599,8 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
             "/async/streaming/blanks/", headers={"accept-encoding": "zstd"}
         )
 
-        assert isinstance(response, StreamingHttpResponse)
-        assert response.is_async
+        assert isinstance(response, StreamingHttpResponse)  # type: ignore[unreachable]
+        assert response.is_async  # type: ignore[unreachable]
         assert response.status_code == HTTPStatus.OK
         assert response.headers["content-encoding"] == "zstd"
         assert response.headers["vary"] == "accept-encoding"
