@@ -11,6 +11,10 @@ Unreleased
 
 * Drop Django 4.2 to 5.1 support.
 
+* Switch package build backend from setuptools to `uv_build <https://docs.astral.sh/uv/concepts/build-backend/>`__.
+  This makes builds with uv about nine times faster, since uv runs the backend natively, without creating a build environment or spawning a Python process.
+  Additionally, source distributions no longer include test files, which setuptools previously included incompletely, missing the files needed to actually run them.
+
 1.4.0 (2026-04-08)
 ------------------
 
