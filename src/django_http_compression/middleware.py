@@ -14,7 +14,7 @@ from functools import lru_cache, partial
 from gzip import GzipFile
 from secrets import randbelow, token_urlsafe
 from types import MappingProxyType
-from typing import Literal, cast
+from typing import Literal, assert_never, cast
 
 from asgiref.sync import iscoroutinefunction, markcoroutinefunction
 from django.http import HttpRequest, HttpResponse, StreamingHttpResponse
@@ -22,7 +22,6 @@ from django.http.response import HttpResponseBase
 from django.utils.cache import patch_vary_headers
 from django.utils.text import StreamingBuffer
 from django.utils.text import compress_string as gzip_compress
-from typing_extensions import assert_never
 
 if sys.version_info >= (3, 14):
     from compression.zstd import ZstdCompressor
