@@ -23,12 +23,19 @@ from django.utils.cache import patch_vary_headers
 from django.utils.text import StreamingBuffer
 from django.utils.text import compress_string as gzip_compress
 
-if sys.version_info >= (3, 14):
-    from compression.zstd import ZstdCompressor
-    from compression.zstd import compress as zstd_compress
-else:
-    from backports.zstd import ZstdCompressor
-    from backports.zstd import compress as zstd_compress
+try:
+    if sys.version_info >= (3, 14):
+        from compression.zstd import ZstdCompressor
+        from compression.zstd import compress as zstd_compress
+    else:
+        from backports.zstd import ZstdCompressor
+        from backports.zstd import compress as zstd_compress
+
+    HAVE_ZSTD = True
+except ImportError:
+    # Some Python builds lack libzstd, so Zstandard support may be missing
+    # even on 3.14+.
+    HAVE_ZSTD = False
 
 try:
     from brotli import Compressor as BrotliCompressor
@@ -242,7 +249,7 @@ class HttpCompressionMiddleware:
 
 codings = MappingProxyType(
     {
-        "zstd": 0,
+        **({"zstd": 0} if HAVE_ZSTD else {}),
         **({"br": 1} if HAVE_BROTLI else {}),
         "gzip": 2,
         "identity": 3,
