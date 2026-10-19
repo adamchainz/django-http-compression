@@ -5,6 +5,10 @@ Changelog
 Unreleased
 ----------
 
+* Don't compress streaming responses whose status cannot carry a body (1xx, 204, and 304).
+
+  `Issue #73 <https://github.com/adamchainz/django-http-compression/issues/73>`__.
+
 * Drop Python 3.10 support.
 
 * Support Python 3.15.

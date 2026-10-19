@@ -56,7 +56,6 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
             assert response.status_code == status
             assert "content-encoding" not in response.headers
             assert b"".join(response) == b""
-        assert response.content == b"short"
 
     def test_encoded(self):
         response = self.client.get("/encoded/", headers={"accept-encoding": "gzip"})
