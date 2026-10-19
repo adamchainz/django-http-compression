@@ -135,6 +135,12 @@ class HttpCompressionMiddleware:
         return response
 
     def maybe_compress(self, request: HttpRequest, response: HttpResponseBase) -> None:
+        # RFC 9110 Section 6.4.1: 1xx, 204, and 304 must not include a body.
+        # Streaming responses have no content-length, so the short-body check
+        # below does not cover an empty stream.
+        if response.status_code < 200 or response.status_code in (204, 304):
+            return
+
         # Only compress known-compressible content types
         content_type = response.headers.get("content-type", "").split(";", 1)[0]
         if not self.content_type_re.match(content_type):

@@ -115,6 +115,7 @@ In practice, modern browsers do not send ``q`` factors and nearly all support Zs
 
 The middleware skips compression if any of the following are true:
 
+* The response status cannot carry a body (1xx, 204, or 304).
 * The ``content-type`` header does not match a known-compressible type like ``text/html``.
 * The content body is less than 50 bytes.
 * The response already has a ``Content-Encoding`` header.

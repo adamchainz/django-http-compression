@@ -17,7 +17,7 @@ from brotli import Decompressor as BrotliDecompressor
 from brotli import decompress as brotli_decompress
 from django.http import StreamingHttpResponse
 from django.middleware import gzip as django_middleware_gzip
-from django.test import SimpleTestCase
+from django.test import RequestFactory, SimpleTestCase
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
 from django_http_compression.middleware import HttpCompressionMiddleware, best_coding
@@ -38,7 +38,25 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
         assert response.status_code == HTTPStatus.OK
         assert "content-encoding" not in response.headers
         assert "vary" not in response.headers
-        assert response.content == b"short"
+
+    def test_streaming_bodyless_status_is_not_compressed(self):
+        # RFC 9110 forbids a body on 1xx, 204, and 304. An empty streaming
+        # response still has no content-length, so the short-body skip misses it.
+        for status in (
+            HTTPStatus.CONTINUE,
+            HTTPStatus.NO_CONTENT,
+            HTTPStatus.NOT_MODIFIED,
+        ):
+            middleware = HttpCompressionMiddleware(
+                lambda request, status=status: StreamingHttpResponse([], status=status)
+            )
+            request = RequestFactory().get("/", headers={"accept-encoding": "gzip"})
+            response = middleware(request)
+            assert isinstance(response, StreamingHttpResponse)
+
+            assert response.status_code == status
+            assert "content-encoding" not in response.headers
+            assert b"".join(response) == b""
 
     def test_encoded(self):
         response = self.client.get("/encoded/", headers={"accept-encoding": "gzip"})
