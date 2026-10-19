@@ -52,6 +52,7 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
             )
             request = RequestFactory().get("/", headers={"accept-encoding": "gzip"})
             response = middleware(request)
+            assert isinstance(response, StreamingHttpResponse)
 
             assert response.status_code == status
             assert "content-encoding" not in response.headers
