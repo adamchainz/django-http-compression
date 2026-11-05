@@ -13,6 +13,8 @@ Unreleased
 
 * Drop Django 4.2 to 5.1 support.
 
+* Parse ``Accept-Encoding`` case-insensitively, per `RFC 9110 Section 8.4.1 <https://www.rfc-editor.org/rfc/rfc9110#section-8.4.1>`__.
+
 * Avoid compressing already-compressed content types that start with a compressible type’s name, such as ``application/font-woff``.
 
 * Fix the ``django_http_compression.W001`` system check, which never triggered because it looked for the wrong middleware name.
