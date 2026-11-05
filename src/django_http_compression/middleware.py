@@ -269,6 +269,10 @@ codings = MappingProxyType(
 
 Coding = Literal["identity", "gzip", "br", "zstd"]
 
+# Recipients should treat x-gzip as equivalent to gzip:
+# https://www.rfc-editor.org/rfc/rfc9110#section-8.4.1.3
+coding_aliases = MappingProxyType({"x-gzip": "gzip"})
+
 
 def best_coding(accept_encoding: str) -> Coding:
     if len(accept_encoding) > 2048:
@@ -303,6 +307,7 @@ def part_key(part: tuple[float, int, str]) -> tuple[float, int]:
 def _parse_part(
     part: str,
 ) -> tuple[float, int, Coding] | None:
+    part = coding_aliases.get(part, part)
     try:
         preference = codings[part]
     except KeyError:
@@ -316,6 +321,7 @@ def _parse_part(
     if ";" in part:
         coding, params = part.split(";", 1)
         coding = coding.strip()
+        coding = coding_aliases.get(coding, coding)
         if coding in codings:
             params = params.strip()
             if params.startswith("q="):
