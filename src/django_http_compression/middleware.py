@@ -12,6 +12,7 @@ from collections.abc import (
 )
 from functools import lru_cache, partial
 from gzip import GzipFile
+from http import HTTPStatus
 from secrets import randbelow, token_urlsafe
 from types import MappingProxyType
 from typing import Literal, assert_never, cast
@@ -148,6 +149,15 @@ class HttpCompressionMiddleware:
 
         # Avoid gzipping if we've already got a content-encoding.
         if "content-encoding" in response.headers:
+            return
+
+        # Byte ranges refer to the encoded content, so compressing a partial
+        # response would make its Content-Range incorrect:
+        # https://www.rfc-editor.org/rfc/rfc9110#section-14.4
+        if (
+            response.status_code == HTTPStatus.PARTIAL_CONTENT
+            or "content-range" in response.headers
+        ):
             return
 
         # Respect the no-transform directive, which forbids changing the

@@ -13,6 +13,8 @@ Unreleased
 
 * Drop Django 4.2 to 5.1 support.
 
+* Skip compressing partial responses, with status code 206 or a ``Content-Range`` header, since byte ranges refer to the encoded content, per `RFC 9110 Section 14.4 <https://www.rfc-editor.org/rfc/rfc9110#section-14.4>`__.
+
 * Skip compressing responses with ``Cache-Control: no-transform``, per `RFC 9111 Section 5.2.2.6 <https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.6>`__.
 
 * Parse ``Accept-Encoding`` case-insensitively, per `RFC 9110 Section 8.4.1 <https://www.rfc-editor.org/rfc/rfc9110#section-8.4.1>`__.

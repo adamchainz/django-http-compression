@@ -642,6 +642,22 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
         assert response.content.startswith(b"\x1f\x8b\x08")
 
     @parametrize(
+        "path,status_code",
+        [
+            ("/partial-content/", HTTPStatus.PARTIAL_CONTENT),
+            ("/partial-content/no-range/", HTTPStatus.PARTIAL_CONTENT),
+            ("/content-range/", HTTPStatus.OK),
+        ],
+    )
+    def test_partial_content(self, path: str, status_code: HTTPStatus) -> None:
+        response = self.client.get(path, headers={"accept-encoding": "gzip"})
+
+        assert response.status_code == status_code
+        assert "content-encoding" not in response.headers
+        assert "vary" not in response.headers
+        assert response.content.startswith(b"<!doctype html>")
+
+    @parametrize(
         "cache_control,compressed",
         [
             ("no-transform", False),
