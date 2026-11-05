@@ -99,6 +99,8 @@ class HttpCompressionMiddleware:
         re.VERBOSE | re.IGNORECASE,
     )
 
+    no_transform_re = re.compile(r"(?:^|,)\s*no-transform\s*(?:,|$)", re.IGNORECASE)
+
     sync_capable = True
     async_capable = True
 
@@ -146,6 +148,12 @@ class HttpCompressionMiddleware:
 
         # Avoid gzipping if we've already got a content-encoding.
         if "content-encoding" in response.headers:
+            return
+
+        # Respect the no-transform directive, which forbids changing the
+        # content's coding:
+        # https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.6
+        if self.no_transform_re.search(response.headers.get("cache-control", "")):
             return
 
         accept_encoding = request.headers.get("accept-encoding", "")

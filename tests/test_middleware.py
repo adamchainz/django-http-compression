@@ -641,6 +641,34 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
         assert response.headers["etag"] == 'W/"12345"'
         assert response.content.startswith(b"\x1f\x8b\x08")
 
+    @parametrize(
+        "cache_control,compressed",
+        [
+            ("no-transform", False),
+            ("No-Transform", False),
+            ("public, no-transform", False),
+            ("no-transform, max-age=60", False),
+            ("public,no-transform,max-age=60", False),
+            ("public, max-age=60", True),
+            ("no-transformer", True),
+            ('private="x-no-transform"', True),
+        ],
+    )
+    def test_cache_control(self, cache_control: str, compressed: bool) -> None:
+        response = self.client.get(
+            "/cache-control/",
+            {"cache_control": cache_control},
+            headers={"accept-encoding": "gzip"},
+        )
+
+        assert response.status_code == HTTPStatus.OK
+        if compressed:
+            assert response.headers["content-encoding"] == "gzip"
+        else:
+            assert "content-encoding" not in response.headers
+            assert "vary" not in response.headers
+            assert response.content.decode() == basic_html
+
     def test_random_bytes_disabled(self):
         with mock.patch.object(HttpCompressionMiddleware, "max_random_bytes", 0):
             response = self.client.get("/", headers={"accept-encoding": "gzip"})

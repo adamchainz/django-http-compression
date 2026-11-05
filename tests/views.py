@@ -105,3 +105,9 @@ def binary(request: HttpRequest) -> FileResponse:
 
 def etag(request: HttpRequest) -> HttpResponse:
     return HttpResponse(basic_html, headers={"ETag": '"12345"'})
+
+
+def cache_control(request: HttpRequest) -> HttpResponse:
+    return HttpResponse(
+        basic_html, headers={"Cache-Control": request.GET["cache_control"]}
+    )

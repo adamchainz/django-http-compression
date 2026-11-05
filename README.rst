@@ -118,6 +118,7 @@ The middleware skips compression if any of the following are true:
 * The ``content-type`` header does not match a known-compressible type like ``text/html``.
 * The content body is less than 50 bytes.
 * The response already has a ``Content-Encoding`` header.
+* The response has a ``Cache-Control`` header with the ``no-transform`` directive, per `RFC 9111 Section 5.2.2.6 <https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.6>`__.
 * The request does not have a supported ``accept-encoding`` header.
 * Compression lengthens the response (for non-streaming responses).
 
