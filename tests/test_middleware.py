@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import gzip
 import inspect
+import subprocess
 import sys
 import zlib
 from collections.abc import AsyncIterator, Callable, Iterator
@@ -928,6 +929,59 @@ class UpstreamSourceTests(SimpleTestCase):
 
 
 py314 = sys.version_info >= (3, 14)
+
+
+def run_python(code: str) -> str:
+    result = subprocess.run(
+        [sys.executable, "-c", dedent(code)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    return result.stdout
+
+
+@pytest.mark.skipif(not py314, reason="Python 3.14+ only")
+class MissingZstdTests(SimpleTestCase):
+    """
+    Simulate Python 3.14+ builds without libzstd, such as on Azure App Service.
+    """
+
+    def test_no_zstd(self):
+        output = run_python("""\
+            import sys
+
+            sys.modules["_zstd"] = None
+            sys.modules["backports.zstd"] = None
+
+            from django_http_compression import middleware
+
+            print(middleware.HAVE_ZSTD)
+            print(middleware.best_coding("zstd, br, gzip"))
+            print(middleware.best_coding("zstd"))
+        """)
+        assert output.split() == ["False", "br", "identity"]
+
+    def test_backports_zstd_fallback(self):
+        output = run_python("""\
+            import sys
+            import types
+
+            sys.modules["_zstd"] = None
+            fake = types.ModuleType("backports.zstd")
+            fake.ZstdCompressor = object()
+            fake.compress = object()
+            sys.modules.setdefault("backports", types.ModuleType("backports"))
+            sys.modules["backports.zstd"] = fake
+
+            from django_http_compression import middleware
+
+            print(middleware.HAVE_ZSTD)
+            print(middleware.ZstdCompressor is fake.ZstdCompressor)
+            print(middleware.best_coding("zstd, br, gzip"))
+        """)
+        assert output.split() == ["True", "True", "zstd"]
 
 
 class BestCodingTests(ParametrizedTestCase, SimpleTestCase):
