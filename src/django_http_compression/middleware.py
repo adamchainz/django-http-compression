@@ -162,6 +162,15 @@ class HttpCompressionMiddleware:
         return response
 
     def maybe_compress(self, request: HttpRequest, response: HttpResponseBase) -> None:
+        # Responses with these statuses can't have content, so compressing would
+        # add a body:
+        # https://www.rfc-editor.org/rfc/rfc9110#section-6.4.1-8
+        if response.status_code < 200 or response.status_code in (
+            HTTPStatus.NO_CONTENT,
+            HTTPStatus.NOT_MODIFIED,
+        ):
+            return
+
         # Only compress known-compressible content types
         content_type = response.headers.get("content-type", "").split(";", 1)[0].strip()
         if not self.content_type_re.match(content_type):

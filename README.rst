@@ -137,6 +137,7 @@ Then use your subclass in ``MIDDLEWARE`` in place of ``HttpCompressionMiddleware
 
 The middleware skips compression if any of the following are true:
 
+* The status code is 1xx, 204, or 304, since these responses `can’t have content <https://www.rfc-editor.org/rfc/rfc9110#section-6.4.1-8>`__.
 * The ``content-type`` header does not match a known-compressible type like ``text/html``.
 * The content body is less than 50 bytes.
 * The response already has a ``Content-Encoding`` header.
