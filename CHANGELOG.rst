@@ -13,6 +13,8 @@ Unreleased
 
 * Drop Django 4.2 to 5.1 support.
 
+* Make the ``django_http_compression.W001`` system check detect subclasses of ``HttpCompressionMiddleware`` and ``GZipMiddleware``.
+
 * Skip compressing responses with status codes that can’t have content: 1xx, 204, and 304, per `RFC 9110 Section 6.4.1 <https://www.rfc-editor.org/rfc/rfc9110#section-6.4.1-8>`__.
   Previously, empty streaming responses with these statuses gained a compressed body.
 
