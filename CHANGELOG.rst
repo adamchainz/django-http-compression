@@ -13,6 +13,8 @@ Unreleased
 
 * Drop Django 4.2 to 5.1 support.
 
+* Avoid compressing already-compressed content types that start with a compressible type’s name, such as ``application/font-woff``.
+
 * Fix the ``django_http_compression.W001`` system check, which never triggered because it looked for the wrong middleware name.
 
 * Switch package build backend from setuptools to `uv_build <https://docs.astral.sh/uv/concepts/build-backend/>`__.

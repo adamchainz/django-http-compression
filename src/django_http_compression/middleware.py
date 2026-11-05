@@ -94,7 +94,7 @@ class HttpCompressionMiddleware:
             multipart/bag |
             multipart/mixed |
             text/.*
-        )
+        )$
     """,
         re.VERBOSE | re.IGNORECASE,
     )
@@ -136,7 +136,7 @@ class HttpCompressionMiddleware:
 
     def maybe_compress(self, request: HttpRequest, response: HttpResponseBase) -> None:
         # Only compress known-compressible content types
-        content_type = response.headers.get("content-type", "").split(";", 1)[0]
+        content_type = response.headers.get("content-type", "").split(";", 1)[0].strip()
         if not self.content_type_re.match(content_type):
             return
 

@@ -706,6 +706,10 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
             ("image/jpeg", False),
             ("image/png", False),
             ("video/mp4", False),
+            # Only full matches
+            ("application/font-woff", False),
+            ("application/font-woff2", False),
+            ("application/jsonx", False),
         ],
     )
     def test_content_type_re(self, content_type: str, expected: bool) -> None:
