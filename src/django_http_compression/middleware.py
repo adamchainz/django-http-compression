@@ -12,6 +12,7 @@ from collections.abc import (
 )
 from functools import lru_cache, partial
 from gzip import GzipFile
+from gzip import compress as gzip_compress
 from http import HTTPStatus
 from secrets import randbelow, token_urlsafe
 from types import MappingProxyType
@@ -22,7 +23,6 @@ from django.http import HttpRequest, HttpResponse, StreamingHttpResponse
 from django.http.response import HttpResponseBase
 from django.utils.cache import patch_vary_headers
 from django.utils.text import StreamingBuffer
-from django.utils.text import compress_string as gzip_compress
 
 if sys.version_info >= (3, 14):
     from compression.zstd import ZstdCompressor
@@ -40,12 +40,6 @@ except ImportError:  # pragma: no cover
     HAVE_BROTLI = False
 
 
-# Copy CloudFlare’s default quality setting, to balance
-# speed versus savings.
-# https://blog.cloudflare.com/results-experimenting-brotli/
-BROTLI_QUALITY = 4
-
-
 class HttpCompressionMiddleware:
     """
     Compress content with the best-supported encoding that the client accepts.
@@ -54,6 +48,19 @@ class HttpCompressionMiddleware:
     """
 
     max_random_bytes = 99
+
+    # Match Django’s GZipMiddleware, which uses level 6 (out of 1-9).
+    gzip_compression_level = 6
+
+    # Copy CloudFlare’s default quality setting (out of 0-11), to balance
+    # speed versus savings.
+    # https://blog.cloudflare.com/results-experimenting-brotli/
+    brotli_compression_quality = 4
+
+    # Copy CloudFlare again and use zstd’s default level, 3. zstd supports a
+    # broad range of levels, including negative ones for faster compression.
+    # https://blog.cloudflare.com/new-standards/#:~:text=level%20of%203
+    zstandard_compression_level = 3
 
     # Seeded from Caddy’s default list of compressible content types
     # https://caddyserver.com/docs/caddyfile/directives/encode
@@ -184,17 +191,20 @@ class HttpCompressionMiddleware:
                     compressed_wrapper = partial(
                         gzip_compress_sequence_async,
                         streaming_content,
+                        level=self.gzip_compression_level,
                     )
 
                 elif coding == "br":
                     compressed_wrapper = partial(
                         brotli_compress_sequence_async,
                         streaming_content,
+                        quality=self.brotli_compression_quality,
                     )
                 elif coding == "zstd":
                     compressed_wrapper = partial(
                         zstd_compress_sequence_async,
                         streaming_content,
+                        level=self.zstandard_compression_level,
                     )
                 else:  # pragma: no cover
                     assert_never(coding)
@@ -203,15 +213,18 @@ class HttpCompressionMiddleware:
             else:
                 if coding == "gzip":
                     response.streaming_content = gzip_compress_sequence(
-                        response.streaming_content  # type: ignore [arg-type]
+                        response.streaming_content,  # type: ignore [arg-type]
+                        level=self.gzip_compression_level,
                     )
                 elif coding == "br":
                     response.streaming_content = brotli_compress_sequence(
                         response.streaming_content,  # type: ignore [arg-type]
+                        quality=self.brotli_compression_quality,
                     )
                 elif coding == "zstd":
                     response.streaming_content = zstd_compress_sequence(
                         response.streaming_content,  # type: ignore [arg-type]
+                        level=self.zstandard_compression_level,
                     )
                 else:  # pragma: no cover
                     assert_never(coding)
@@ -222,17 +235,20 @@ class HttpCompressionMiddleware:
             response = cast(HttpResponse, response)
             # Return the compressed content only if it's actually shorter.
             if coding == "gzip":
-                compressed_content = gzip_compress(response.content, max_random_bytes=0)
+                compressed_content = gzip_compress(
+                    response.content,
+                    compresslevel=self.gzip_compression_level,
+                    mtime=0,
+                )
             elif coding == "br":
                 compressed_content = brotli_compress(
                     response.content,
-                    quality=BROTLI_QUALITY,
+                    quality=self.brotli_compression_quality,
                 )
             elif coding == "zstd":
                 compressed_content = zstd_compress(
                     response.content,
-                    # Copy CloudFlare again and use the default level, 3.
-                    # https://blog.cloudflare.com/new-standards/#:~:text=level%20of%203
+                    level=self.zstandard_compression_level,
                 )
             else:  # pragma: no cover
                 assert_never(coding)
@@ -336,14 +352,16 @@ def _parse_part(
     return None
 
 
-def gzip_compress_sequence(sequence: Iterator[bytes]) -> Generator[bytes]:
+def gzip_compress_sequence(
+    sequence: Iterator[bytes], *, level: int
+) -> Generator[bytes]:
     """
     Copy of Django’s compress_sequence() but with streaming response flushing
     bug fixed and random bytes feature removed in favour of x-noise header.
     """
     buf = StreamingBuffer()
     with GzipFile(
-        filename=None, mode="wb", compresslevel=6, fileobj=buf, mtime=0
+        filename=None, mode="wb", compresslevel=level, fileobj=buf, mtime=0
     ) as zfile:
         # Output headers...
         yield b""  # Optimization
@@ -357,7 +375,7 @@ def gzip_compress_sequence(sequence: Iterator[bytes]) -> Generator[bytes]:
 
 
 async def gzip_compress_sequence_async(
-    sequence: AsyncIterator[bytes],
+    sequence: AsyncIterator[bytes], *, level: int
 ) -> AsyncGenerator[bytes]:
     """
     Fixed version of Django's gzip_wrapper(), and with random bytes feature
@@ -365,7 +383,7 @@ async def gzip_compress_sequence_async(
     """
     buf = StreamingBuffer()
     with GzipFile(
-        filename=None, mode="wb", compresslevel=6, fileobj=buf, mtime=0
+        filename=None, mode="wb", compresslevel=level, fileobj=buf, mtime=0
     ) as zfile:
         # Output headers...
         yield b""  # Optimization
@@ -378,11 +396,13 @@ async def gzip_compress_sequence_async(
     yield buf.read()
 
 
-def brotli_compress_sequence(sequence: Iterator[bytes]) -> Generator[bytes]:
+def brotli_compress_sequence(
+    sequence: Iterator[bytes], *, quality: int
+) -> Generator[bytes]:
     # Output headers
     yield b""
 
-    compressor = BrotliCompressor(quality=BROTLI_QUALITY)
+    compressor = BrotliCompressor(quality=quality)
     for item in sequence:
         data = compressor.process(item)
         data += compressor.flush()
@@ -394,12 +414,12 @@ def brotli_compress_sequence(sequence: Iterator[bytes]) -> Generator[bytes]:
 
 
 async def brotli_compress_sequence_async(
-    sequence: AsyncIterator[bytes],
+    sequence: AsyncIterator[bytes], *, quality: int
 ) -> AsyncGenerator[bytes]:
     # Output headers
     yield b""
 
-    compressor = BrotliCompressor(quality=BROTLI_QUALITY)
+    compressor = BrotliCompressor(quality=quality)
     async for item in sequence:
         data = compressor.process(item)
         data += compressor.flush()
@@ -410,11 +430,13 @@ async def brotli_compress_sequence_async(
         yield out
 
 
-def zstd_compress_sequence(sequence: Iterator[bytes]) -> Generator[bytes]:
+def zstd_compress_sequence(
+    sequence: Iterator[bytes], *, level: int
+) -> Generator[bytes]:
     # Output headers
     yield b""
 
-    compressor = ZstdCompressor()
+    compressor = ZstdCompressor(level=level)
     for item in sequence:
         data = compressor.compress(item, mode=ZstdCompressor.FLUSH_BLOCK)
         if data:  # pragma: no branch
@@ -425,12 +447,12 @@ def zstd_compress_sequence(sequence: Iterator[bytes]) -> Generator[bytes]:
 
 
 async def zstd_compress_sequence_async(
-    sequence: AsyncIterator[bytes],
+    sequence: AsyncIterator[bytes], *, level: int
 ) -> AsyncGenerator[bytes]:
     # Output headers
     yield b""
 
-    compressor = ZstdCompressor()
+    compressor = ZstdCompressor(level=level)
     async for item in sequence:
         data = compressor.compress(item, mode=ZstdCompressor.FLUSH_BLOCK)
         if data:  # pragma: no branch

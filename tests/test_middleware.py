@@ -4,7 +4,7 @@ import gzip
 import inspect
 import sys
 import zlib
-from collections.abc import AsyncIterator, Iterator
+from collections.abc import AsyncIterator, Callable, Iterator
 from gzip import decompress as gzip_decompress
 from http import HTTPStatus
 from textwrap import dedent
@@ -14,20 +14,29 @@ from unittest import mock
 import django
 import pytest
 from brotli import Decompressor as BrotliDecompressor
+from brotli import compress as brotli_compress
 from brotli import decompress as brotli_decompress
 from django.http import StreamingHttpResponse
 from django.middleware import gzip as django_middleware_gzip
 from django.test import SimpleTestCase
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
-from django_http_compression.middleware import HttpCompressionMiddleware, best_coding
+from django_http_compression.middleware import (
+    HttpCompressionMiddleware,
+    best_coding,
+    brotli_compress_sequence,
+    gzip_compress_sequence,
+    zstd_compress_sequence,
+)
 from tests.views import basic_html
 
 try:
     from compression.zstd import ZstdDecompressor
+    from compression.zstd import compress as zstd_compress
     from compression.zstd import decompress as zstd_decompress
 except ImportError:
     from backports.zstd import ZstdDecompressor  # type: ignore [no-redef]
+    from backports.zstd import compress as zstd_compress  # type: ignore [no-redef]
     from backports.zstd import decompress as zstd_decompress  # type: ignore [no-redef]
 
 
@@ -684,6 +693,87 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
             assert "content-encoding" not in response.headers
             assert "vary" not in response.headers
             assert response.content.decode() == basic_html
+
+    compression_level_cases: dict[
+        str,
+        tuple[
+            str,
+            int,
+            Callable[[bytes, int], bytes],
+            Callable[[Iterator[bytes], int], Iterator[bytes]],
+        ],
+    ] = {
+        "gzip": (
+            "gzip_compression_level",
+            1,
+            lambda content, level: gzip.compress(content, compresslevel=level, mtime=0),
+            lambda chunks, level: gzip_compress_sequence(chunks, level=level),
+        ),
+        "br": (
+            "brotli_compression_quality",
+            11,
+            lambda content, level: brotli_compress(content, quality=level),
+            lambda chunks, level: brotli_compress_sequence(chunks, quality=level),
+        ),
+        "zstd": (
+            "zstandard_compression_level",
+            -5,
+            lambda content, level: zstd_compress(content, level=level),
+            lambda chunks, level: zstd_compress_sequence(chunks, level=level),
+        ),
+    }
+
+    @parametrize("coding", [("gzip",), ("br",), ("zstd",)])
+    def test_compression_level(self, coding: str) -> None:
+        attr, level, compress, _ = self.compression_level_cases[coding]
+        content = basic_html.encode()
+        default_level = getattr(HttpCompressionMiddleware, attr)
+        assert compress(content, level) != compress(content, default_level)
+
+        with mock.patch.object(HttpCompressionMiddleware, attr, level):
+            response = self.client.get("/", headers={"accept-encoding": coding})
+
+        assert response.status_code == HTTPStatus.OK
+        assert response.headers["content-encoding"] == coding
+        assert response.content == compress(content, level)
+
+    @parametrize("coding", [("gzip",), ("br",), ("zstd",)])
+    def test_compression_level_streaming(self, coding: str) -> None:
+        attr, level, _, compress_sequence = self.compression_level_cases[coding]
+        lines = [line.encode() for line in basic_html.splitlines(keepends=True)]
+
+        with mock.patch.object(HttpCompressionMiddleware, attr, level):
+            response = self.client.get(
+                "/streaming/", headers={"accept-encoding": coding}
+            )
+
+        assert isinstance(response, StreamingHttpResponse)  # type: ignore[unreachable]
+        assert response.headers["content-encoding"] == coding  # type: ignore[unreachable]
+        content = b"".join(cast(Iterator[bytes], response.streaming_content))
+        assert content == b"".join(compress_sequence(iter(lines), level))
+
+    @parametrize("coding", [("gzip",), ("br",), ("zstd",)])
+    async def test_compression_level_async_streaming(self, coding: str) -> None:
+        attr, level, _, compress_sequence = self.compression_level_cases[coding]
+        lines = [line.encode() for line in basic_html.splitlines(keepends=True)]
+
+        with mock.patch.object(HttpCompressionMiddleware, attr, level):
+            response = await self.async_client.get(
+                "/async/streaming/", headers={"accept-encoding": coding}
+            )
+
+        assert isinstance(response, StreamingHttpResponse)  # type: ignore[unreachable]
+        assert response.is_async  # type: ignore[unreachable]
+        assert response.headers["content-encoding"] == coding
+        content = b"".join(
+            [
+                chunk
+                async for chunk in cast(
+                    AsyncIterator[bytes], response.streaming_content
+                )
+            ]
+        )
+        assert content == b"".join(compress_sequence(iter(lines), level))
 
     def test_random_bytes_disabled(self):
         with mock.patch.object(HttpCompressionMiddleware, "max_random_bytes", 0):
