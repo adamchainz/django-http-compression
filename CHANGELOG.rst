@@ -17,6 +17,11 @@ Unreleased
   This makes builds with uv about nine times faster, since uv runs the backend natively, without creating a build environment or spawning a Python process.
   Additionally, source distributions no longer include test files, which setuptools previously included incompletely, missing the files needed to actually run them.
 
+* Fix crash when the Python installation lacks Zstandard support, such as Python 3.14 builds without libzstd linked in.
+  The middleware now falls back to Brotli or Gzip.
+
+  `PR #72 <https://github.com/adamchainz/django-http-compression/pull/72>`__.
+
 1.4.0 (2026-04-08)
 ------------------
 

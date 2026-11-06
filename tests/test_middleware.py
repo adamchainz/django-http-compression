@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import gzip
+import importlib.util
 import inspect
 import sys
 import zlib
@@ -15,11 +16,12 @@ import django
 import pytest
 from brotli import Decompressor as BrotliDecompressor
 from brotli import decompress as brotli_decompress
-from django.http import StreamingHttpResponse
+from django.http import HttpResponse, StreamingHttpResponse
 from django.middleware import gzip as django_middleware_gzip
-from django.test import SimpleTestCase
+from django.test import RequestFactory, SimpleTestCase
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
+from django_http_compression import middleware
 from django_http_compression.middleware import HttpCompressionMiddleware, best_coding
 from tests.views import basic_html
 
@@ -876,3 +878,38 @@ class BestCodingTests(ParametrizedTestCase, SimpleTestCase):
     )
     def test_best_coding(self, given, expected):
         assert best_coding(given) == expected
+
+
+class MissingZstandardTests(SimpleTestCase):
+    """Test that the middleware works without the Zstandard feature."""
+
+    def test_zstd_not_available(self):
+        # Simulate a Python build lacking libzstd, as reported for Python 3.14
+        # builds on Azure App Service (issue #68).
+        source_path = inspect.getsourcefile(middleware)
+        assert source_path is not None
+
+        with mock.patch.dict(
+            sys.modules, {"compression.zstd": None, "backports.zstd": None}
+        ):
+            spec = importlib.util.spec_from_file_location(
+                "middleware_without_zstd", source_path
+            )
+            assert spec is not None
+            assert spec.loader is not None
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+
+        assert module.HAVE_ZSTD is False
+        assert "zstd" not in module.codings
+        assert module.best_coding("zstd, gzip") == "gzip"
+        assert module.best_coding("zstd") == "identity"
+
+        # A client asking for Zstandard still receives a compressed response,
+        # because the middleware falls back to the next-best coding.
+        request = RequestFactory().get("/", headers={"accept-encoding": "zstd, gzip"})
+        response = HttpResponse(basic_html)
+        module.HttpCompressionMiddleware(lambda request: response).maybe_compress(
+            request, response
+        )
+        assert response.headers["content-encoding"] == "gzip"

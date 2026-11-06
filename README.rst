@@ -96,7 +96,7 @@ __ https://docs.djangoproject.com/en/stable/ref/middleware/#django.middleware.gz
 .. |accept-encoding| replace:: ``Accept-Encoding``
 __ https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Encoding
 
-* Zstandard (``zstd``).
+* Zstandard (``zstd``), if the Python installation has Zstandard support.
 
 * Brotli (``br``), if the ``brotli`` extra is installed.
 
