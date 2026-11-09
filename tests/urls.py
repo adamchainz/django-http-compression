@@ -18,4 +18,6 @@ urlpatterns = [
     path("random/", views.random),
     path("binary/", views.binary),
     path("etag/", views.etag),
+    path("partial-content/", views.partial_content),
+    path("partial-content/no-range/", views.partial_content_no_range),
 ]
