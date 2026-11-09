@@ -14,7 +14,7 @@ def check_settings(**kwargs: Any) -> list[CheckMessage]:
     conflicts = set()
 
     for value in settings.MIDDLEWARE:
-        if value == "django_http_compression.middleware.CompressionMiddleware":
+        if value == "django_http_compression.middleware.HttpCompressionMiddleware":
             using_compression_middleware = True
         elif value in (
             "django.middleware.gzip.GZipMiddleware",
@@ -28,7 +28,7 @@ def check_settings(**kwargs: Any) -> list[CheckMessage]:
         for conflict in conflicts:
             errors.append(
                 CheckWarning(
-                    f"Using 'django_http_compression.middleware.CompressionMiddleware' and {conflict!r} together may prevent optimal compression.",
+                    f"Using 'django_http_compression.middleware.HttpCompressionMiddleware' and {conflict!r} together may prevent optimal compression.",
                     hint=f"Remove {conflict!r} from the MIDDLEWARE setting.",
                     id="django_http_compression.W001",
                 )
