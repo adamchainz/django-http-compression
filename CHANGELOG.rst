@@ -5,13 +5,21 @@ Changelog
 Unreleased
 ----------
 
+* Support Python 3.15.
+
+  `PR #63 <https://github.com/adamchainz/django-http-compression/pull/63>`__.
+
 * Drop Python 3.10 support.
 
-* Support Python 3.15.
+  `PR #70 <https://github.com/adamchainz/django-http-compression/pull/70>`__.
 
 * Add Django 6.1 support.
 
+  `PR #58 <https://github.com/adamchainz/django-http-compression/pull/58>`__.
+
 * Drop Django 4.2 to 5.1 support.
+
+  `PR #57 <https://github.com/adamchainz/django-http-compression/pull/57>`__.
 
 * Skip compressing responses with status codes that can’t have content: 1xx, 204, and 304, per `RFC 9110 Section 6.4.1 <https://www.rfc-editor.org/rfc/rfc9110#section-6.4.1-8>`__.
   Previously, empty streaming responses with these statuses gained a compressed body.
@@ -20,8 +28,14 @@ Unreleased
   `PR #74 <https://github.com/adamchainz/django-http-compression/pull/74>`__.
   Thanks to Thibaut Decombe for the report in `Issue #73 <https://github.com/adamchainz/django-http-compression/issues/73>`__ and cherith for the initial work.
 
+* Skip compressing partial responses, with status code 206, since byte ranges refer to the encoded content, per `RFC 9110 Section 14.4 <https://www.rfc-editor.org/rfc/rfc9110#section-14.4>`__.
+
+  `PR #80 <https://github.com/adamchainz/django-http-compression/pull/80>`__.
+
 * Remove ``Accept-Ranges`` from compressed responses, since byte ranges refer to the compressed content, which isn’t stable.
   Previously, clients could resume a compressed download by requesting a range of the uncompressed content, corrupting it.
+
+  `PR #85 <https://github.com/adamchainz/django-http-compression/pull/85>`__.
 
 * Support Python 3.14+ builds without ``libzstd``, such as on Azure App Service.
   The middleware now falls back to ``backports.zstd`` if it’s installed, and otherwise disables Zstandard.
@@ -32,23 +46,33 @@ Unreleased
 
 * Allow subclasses to override compression levels with the ``zstandard_compression_level``, ``brotli_compression_quality``, and ``gzip_compression_level`` attributes.
 
-  `Issue #13 <https://github.com/adamchainz/django-http-compression/issues/13>`__.
+  `PR #82 <https://github.com/adamchainz/django-http-compression/pull/82>`__.
 
 * Treat ``x-gzip`` in ``Accept-Encoding`` as equivalent to ``gzip``, per `RFC 9110 Section 8.4.1.3 <https://www.rfc-editor.org/rfc/rfc9110#section-8.4.1.3>`__.
 
-* Skip compressing partial responses, with status code 206, since byte ranges refer to the encoded content, per `RFC 9110 Section 14.4 <https://www.rfc-editor.org/rfc/rfc9110#section-14.4>`__.
+  `PR #81 <https://github.com/adamchainz/django-http-compression/pull/81>`__.
 
 * Parse ``Accept-Encoding`` case-insensitively, per `RFC 9110 Section 8.4.1 <https://www.rfc-editor.org/rfc/rfc9110#section-8.4.1>`__.
 
+  `PR #79 <https://github.com/adamchainz/django-http-compression/pull/79>`__.
+
 * Avoid compressing WOFF fonts served with the legacy content type ``application/font-woff``, as WhiteNoise does, since they’re already compressed.
+
+  `PR #78 <https://github.com/adamchainz/django-http-compression/pull/78>`__.
 
 * Fix the ``django_http_compression.W001`` system check, which never triggered because it looked for the wrong middleware name.
 
+  `PR #77 <https://github.com/adamchainz/django-http-compression/pull/77>`__.
+
 * Make the ``django_http_compression.W001`` system check detect subclasses of ``HttpCompressionMiddleware``, as used to change compression levels.
+
+  `PR #84 <https://github.com/adamchainz/django-http-compression/pull/84>`__.
 
 * Switch package build backend from setuptools to `uv_build <https://docs.astral.sh/uv/concepts/build-backend/>`__.
   This makes builds with uv about nine times faster, since uv runs the backend natively, without creating a build environment or spawning a Python process.
   Additionally, source distributions no longer include test files, which setuptools previously included incompletely, missing the files needed to actually run them.
+
+  `PR #64 <https://github.com/adamchainz/django-http-compression/pull/64>`__.
 
 1.4.0 (2026-04-08)
 ------------------
