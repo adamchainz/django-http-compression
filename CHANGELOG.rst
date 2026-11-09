@@ -13,6 +13,13 @@ Unreleased
 
 * Drop Django 4.2 to 5.1 support.
 
+* Support Python 3.14+ builds without ``libzstd``, such as on Azure App Service.
+  The middleware now falls back to ``backports.zstd`` if it’s installed, and otherwise disables Zstandard.
+  Previously, importing the middleware crashed.
+
+  `PR #83 <https://github.com/adamchainz/django-http-compression/pull/83>`__.
+  Thanks to Jason Christa for the report in `Issue #68 <https://github.com/adamchainz/django-http-compression/issues/68>`__ and to Xia Jiang for initial work in `PR #72 <https://github.com/adamchainz/django-http-compression/pull/72>`__.
+
 * Allow subclasses to override compression levels with the ``zstandard_compression_level``, ``brotli_compression_quality``, and ``gzip_compression_level`` attributes.
 
   `Issue #13 <https://github.com/adamchainz/django-http-compression/issues/13>`__.
