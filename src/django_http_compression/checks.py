@@ -1,21 +1,23 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import Any
 
 from django.conf import settings
 from django.core.checks import CheckMessage
 from django.core.checks import Warning as CheckWarning
+from django.utils.module_loading import import_string
 
 
 def check_settings(**kwargs: Any) -> list[CheckMessage]:
     errors: list[CheckMessage] = []
 
-    using_compression_middleware = False
+    compression_middleware = None
     conflicts = set()
 
     for value in settings.MIDDLEWARE:
         if value == "django_http_compression.middleware.HttpCompressionMiddleware":
-            using_compression_middleware = True
+            compression_middleware = value
         elif value in (
             "django.middleware.gzip.GZipMiddleware",
             # From legacy package django-compression-middleware:
@@ -24,14 +26,35 @@ def check_settings(**kwargs: Any) -> list[CheckMessage]:
         ):
             conflicts.add(value)
 
-    if using_compression_middleware and conflicts:
+    if compression_middleware is None and conflicts:
+        compression_middleware = _find_subclass(settings.MIDDLEWARE)
+
+    if compression_middleware is not None:
         for conflict in conflicts:
             errors.append(
                 CheckWarning(
-                    f"Using 'django_http_compression.middleware.HttpCompressionMiddleware' and {conflict!r} together may prevent optimal compression.",
+                    f"Using {compression_middleware!r} and {conflict!r} together may prevent optimal compression.",
                     hint=f"Remove {conflict!r} from the MIDDLEWARE setting.",
                     id="django_http_compression.W001",
                 )
             )
 
     return errors
+
+
+def _find_subclass(middleware: Sequence[str]) -> str | None:
+    """
+    Return the first MIDDLEWARE entry that subclasses HttpCompressionMiddleware,
+    as used to change compression levels. This requires importing the
+    entries, so it’s only done when a conflict is found.
+    """
+    from django_http_compression.middleware import HttpCompressionMiddleware
+
+    for value in middleware:
+        try:
+            cls = import_string(value)
+        except ImportError:
+            continue
+        if isinstance(cls, type) and issubclass(cls, HttpCompressionMiddleware):
+            return value
+    return None
