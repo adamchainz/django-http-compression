@@ -101,6 +101,7 @@ __ https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Encoding
 * Brotli (``br``), if the ``brotli`` extra is installed.
 
 * Gzip (``gzip``).
+  The legacy alias ``x-gzip`` is also accepted, per `RFC 9110 Section 8.4.1.3 <https://www.rfc-editor.org/rfc/rfc9110#section-8.4.1.3>`__.
 
 See |the MDN content-encoding documentation|__ for more details on these codings and their browser support.
 

@@ -13,6 +13,8 @@ Unreleased
 
 * Drop Django 4.2 to 5.1 support.
 
+* Treat ``x-gzip`` in ``Accept-Encoding`` as equivalent to ``gzip``, per `RFC 9110 Section 8.4.1.3 <https://www.rfc-editor.org/rfc/rfc9110#section-8.4.1.3>`__.
+
 * Skip compressing partial responses, with status code 206, since byte ranges refer to the encoded content, per `RFC 9110 Section 14.4 <https://www.rfc-editor.org/rfc/rfc9110#section-14.4>`__.
 
 * Parse ``Accept-Encoding`` case-insensitively, per `RFC 9110 Section 8.4.1 <https://www.rfc-editor.org/rfc/rfc9110#section-8.4.1>`__.

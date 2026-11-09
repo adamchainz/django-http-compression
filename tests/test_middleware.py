@@ -899,6 +899,13 @@ class BestCodingTests(ParametrizedTestCase, SimpleTestCase):
             ("Br", "br"),
             ("ZSTD", "zstd"),
             ("gzip;Q=0.5, br;Q=0.9", "br"),
+            # x-gzip alias
+            ("x-gzip", "gzip"),
+            ("X-GZIP", "gzip"),
+            ("x-gzip;q=0.5", "gzip"),
+            ("x-gzip;q=0", "identity"),
+            ("x-gzip, br", "br"),
+            ("x-gzip;q=0.9, br;q=0.5", "gzip"),
         ],
     )
     def test_best_coding(self, given, expected):
