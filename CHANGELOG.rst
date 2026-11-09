@@ -13,6 +13,13 @@ Unreleased
 
 * Drop Django 4.2 to 5.1 support.
 
+* Skip compressing responses with status codes that can’t have content: 1xx, 204, and 304, per `RFC 9110 Section 6.4.1 <https://www.rfc-editor.org/rfc/rfc9110#section-6.4.1-8>`__.
+  Previously, empty streaming responses with these statuses gained a compressed body.
+  304 responses now always get ``Vary: accept-encoding``, matching the 200 response they stand in for, per `RFC 9110 Section 15.4.5 <https://www.rfc-editor.org/rfc/rfc9110#section-15.4.5>`__.
+
+  `PR #74 <https://github.com/adamchainz/django-http-compression/pull/74>`__.
+  Thanks to Thibaut Decombe for the report in `Issue #73 <https://github.com/adamchainz/django-http-compression/issues/73>`__ and cherith for the initial work.
+
 * Support Python 3.14+ builds without ``libzstd``, such as on Azure App Service.
   The middleware now falls back to ``backports.zstd`` if it’s installed, and otherwise disables Zstandard.
   Previously, importing the middleware crashed.

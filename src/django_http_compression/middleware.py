@@ -164,6 +164,21 @@ class HttpCompressionMiddleware:
         return response
 
     def maybe_compress(self, request: HttpRequest, response: HttpResponseBase) -> None:
+        # Responses with these statuses can't have content, so compressing would
+        # add a body:
+        # https://www.rfc-editor.org/rfc/rfc9110#section-6.4.1-8
+        if response.status_code < 200 or response.status_code in (
+            HTTPStatus.NO_CONTENT,
+            HTTPStatus.NOT_MODIFIED,
+        ):
+            # A 304 must have the Vary header that the 200 response would
+            # have, so caches update their stored response consistently, as
+            # Caddy does:
+            # https://www.rfc-editor.org/rfc/rfc9110#section-15.4.5
+            if response.status_code == HTTPStatus.NOT_MODIFIED:
+                patch_vary_headers(response, ("accept-encoding",))
+            return
+
         # Only compress known-compressible content types
         content_type = response.headers.get("content-type", "").split(";", 1)[0]
         if not self.content_type_re.match(content_type):
