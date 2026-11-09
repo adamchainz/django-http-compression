@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import AsyncGenerator, Generator
+from http import HTTPStatus
 from pathlib import Path
 
 from django.http import FileResponse, HttpRequest, HttpResponse, StreamingHttpResponse
@@ -105,3 +106,17 @@ def binary(request: HttpRequest) -> FileResponse:
 
 def etag(request: HttpRequest) -> HttpResponse:
     return HttpResponse(basic_html, headers={"ETag": '"12345"'})
+
+
+def partial_content(request: HttpRequest) -> HttpResponse:
+    content = basic_html.encode()
+    return HttpResponse(
+        content[:100],
+        status=HTTPStatus.PARTIAL_CONTENT,
+        headers={"Content-Range": f"bytes 0-99/{len(content)}"},
+    )
+
+
+def partial_content_no_range(request: HttpRequest) -> HttpResponse:
+    # 206 without Content-Range, as for multipart/byteranges
+    return HttpResponse(basic_html, status=HTTPStatus.PARTIAL_CONTENT)

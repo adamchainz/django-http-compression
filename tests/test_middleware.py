@@ -641,6 +641,21 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
         assert response.headers["etag"] == 'W/"12345"'
         assert response.content.startswith(b"\x1f\x8b\x08")
 
+    @parametrize(
+        "path",
+        [
+            ("/partial-content/",),
+            ("/partial-content/no-range/",),
+        ],
+    )
+    def test_partial_content(self, path: str) -> None:
+        response = self.client.get(path, headers={"accept-encoding": "gzip"})
+
+        assert response.status_code == HTTPStatus.PARTIAL_CONTENT
+        assert "content-encoding" not in response.headers
+        assert "vary" not in response.headers
+        assert response.content.startswith(b"<!doctype html>")
+
     def test_random_bytes_disabled(self):
         with mock.patch.object(HttpCompressionMiddleware, "max_random_bytes", 0):
             response = self.client.get("/", headers={"accept-encoding": "gzip"})

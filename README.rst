@@ -118,6 +118,7 @@ The middleware skips compression if any of the following are true:
 * The ``content-type`` header does not match a known-compressible type like ``text/html``.
 * The content body is less than 50 bytes.
 * The response already has a ``Content-Encoding`` header.
+* The response is a partial response, with status code 206, since byte ranges refer to the encoded content (`RFC 9110 Section 14.4 <https://www.rfc-editor.org/rfc/rfc9110#section-14.4>`__).
 * The request does not have a supported ``accept-encoding`` header.
 * Compression lengthens the response (for non-streaming responses).
 
