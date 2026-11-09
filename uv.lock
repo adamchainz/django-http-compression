@@ -3,11 +3,11 @@ revision = 5
 requires-python = ">=3.11"
 resolution-markers = [
     "python_full_version >= '3.12' and extra != 'group-23-django-http-compression-django52' and extra != 'group-23-django-http-compression-django60' and extra == 'group-23-django-http-compression-django61'",
-    "python_full_version < '3.12' and extra != 'group-23-django-http-compression-django52' and extra != 'group-23-django-http-compression-django60' and extra == 'group-23-django-http-compression-django61'",
     "python_full_version >= '3.12' and extra != 'group-23-django-http-compression-django52' and extra == 'group-23-django-http-compression-django60' and extra != 'group-23-django-http-compression-django61'",
+    "python_full_version >= '3.12' and extra != 'group-23-django-http-compression-django52' and extra != 'group-23-django-http-compression-django60' and extra != 'group-23-django-http-compression-django61'",
+    "python_full_version < '3.12' and extra != 'group-23-django-http-compression-django52' and extra != 'group-23-django-http-compression-django60' and extra == 'group-23-django-http-compression-django61'",
     "python_full_version < '3.12' and extra != 'group-23-django-http-compression-django52' and extra == 'group-23-django-http-compression-django60' and extra != 'group-23-django-http-compression-django61'",
     "extra == 'group-23-django-http-compression-django52' and extra != 'group-23-django-http-compression-django60' and extra != 'group-23-django-http-compression-django61'",
-    "python_full_version >= '3.12' and extra != 'group-23-django-http-compression-django52' and extra != 'group-23-django-http-compression-django60' and extra != 'group-23-django-http-compression-django61'",
     "python_full_version < '3.12' and extra != 'group-23-django-http-compression-django52' and extra != 'group-23-django-http-compression-django60' and extra != 'group-23-django-http-compression-django61'",
 ]
 conflicts = [[
@@ -375,11 +375,11 @@ wheels = [
 
 [[package]]
 name = "django-http-compression"
-version = "1.4.0"
+version = "1.5.0"
 source = { editable = "." }
 dependencies = [
     { name = "asgiref" },
-    { name = "backports-zstd", marker = "python_full_version < '3.14' or (extra == 'group-23-django-http-compression-django52' and extra == 'group-23-django-http-compression-django60') or (extra == 'group-23-django-http-compression-django52' and extra == 'group-23-django-http-compression-django61') or (extra == 'group-23-django-http-compression-django60' and extra == 'group-23-django-http-compression-django61')" },
+    { name = "backports-zstd", marker = "python_full_version < '3.14'" },
     { name = "django", version = "5.2.18", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or extra == 'group-23-django-http-compression-django52' or (extra == 'group-23-django-http-compression-django60' and extra == 'group-23-django-http-compression-django61')" },
     { name = "django", version = "6.0.9", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and extra == 'group-23-django-http-compression-django60') or (extra == 'group-23-django-http-compression-django52' and extra == 'group-23-django-http-compression-django60') or (extra == 'group-23-django-http-compression-django52' and extra == 'group-23-django-http-compression-django61') or (extra == 'group-23-django-http-compression-django60' and extra == 'group-23-django-http-compression-django61')" },
     { name = "django", version = "6.1.2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and extra != 'group-23-django-http-compression-django52' and extra != 'group-23-django-http-compression-django60') or (extra == 'group-23-django-http-compression-django52' and extra == 'group-23-django-http-compression-django60') or (extra == 'group-23-django-http-compression-django52' and extra == 'group-23-django-http-compression-django61') or (extra == 'group-23-django-http-compression-django60' and extra == 'group-23-django-http-compression-django61')" },
@@ -472,7 +472,7 @@ name = "pytest"
 version = "9.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-23-django-http-compression-django52' and extra == 'group-23-django-http-compression-django60') or (extra == 'group-23-django-http-compression-django52' and extra == 'group-23-django-http-compression-django61') or (extra == 'group-23-django-http-compression-django60' and extra == 'group-23-django-http-compression-django61')" },
+    { name = "colorama", marker = "sys_platform == 'win32'" },
     { name = "iniconfig" },
     { name = "packaging" },
     { name = "pluggy" },
