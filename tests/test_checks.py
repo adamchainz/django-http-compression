@@ -1,12 +1,24 @@
 from __future__ import annotations
 
 from io import StringIO
+from typing import Any
+from unittest import mock
 
 from django.core.management import call_command
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
+from django.utils.module_loading import import_string
 
 from django_http_compression.checks import check_settings
+from django_http_compression.middleware import HttpCompressionMiddleware
+
+
+class CompressionMiddlewareSubclass(HttpCompressionMiddleware):
+    pass
+
+
+def function_middleware(get_response):  # pragma: no cover
+    return get_response
 
 
 class ChecksTests(SimpleTestCase):
@@ -33,7 +45,7 @@ class ChecksTests(SimpleTestCase):
             "django_http_compression.middleware.HttpCompressionMiddleware",
         ]
     )
-    def test_e001_just_compression_middleware(self):
+    def test_w001_just_compression_middleware(self):
         messages = check_settings()
         assert messages == []
 
@@ -42,7 +54,7 @@ class ChecksTests(SimpleTestCase):
             "django.middleware.gzip.GZipMiddleware",
         ]
     )
-    def test_e001_just_gzip_middleware(self):
+    def test_w001_just_gzip_middleware(self):
         messages = check_settings()
         assert messages == []
 
@@ -52,7 +64,7 @@ class ChecksTests(SimpleTestCase):
             "django.middleware.common.CommonMiddleware",
         ]
     )
-    def test_e001_unrelated_middleware(self):
+    def test_w001_unrelated_middleware(self):
         messages = check_settings()
         assert messages == []
 
@@ -62,7 +74,7 @@ class ChecksTests(SimpleTestCase):
             "django.middleware.gzip.GZipMiddleware",
         ]
     )
-    def test_e001_conflict_gzip(self):
+    def test_w001_conflict_gzip(self):
         messages = check_settings()
         assert len(messages) == 1
         assert messages[0].id == "django_http_compression.W001"
@@ -74,8 +86,63 @@ class ChecksTests(SimpleTestCase):
             "compression_middleware.middleware.CompressionMiddleware",
         ]
     )
-    def test_e001_conflict_old_package(self):
+    def test_w001_conflict_old_package(self):
         messages = check_settings()
         assert len(messages) == 1
         assert messages[0].id == "django_http_compression.W001"
         assert "compression_middleware" in messages[0].msg
+
+    def mock_import_string(self) -> Any:
+        return mock.patch(
+            "django_http_compression.checks.import_string", wraps=import_string
+        )
+
+    @override_settings(
+        MIDDLEWARE=[
+            "tests.test_checks.CompressionMiddlewareSubclass",
+            "django.middleware.gzip.GZipMiddleware",
+        ]
+    )
+    def test_w001_conflict_compression_subclass(self):
+        messages = check_settings()
+        assert len(messages) == 1
+        assert messages[0].id == "django_http_compression.W001"
+        assert "tests.test_checks.CompressionMiddlewareSubclass" in messages[0].msg
+        assert "GZipMiddleware" in messages[0].msg
+
+    @override_settings(
+        MIDDLEWARE=[
+            "nonexistent.middleware.Middleware",
+            "tests.test_checks.function_middleware",
+            "django.middleware.gzip.GZipMiddleware",
+        ]
+    )
+    def test_w001_no_compression_middleware_skips_others(self):
+        messages = check_settings()
+        assert messages == []
+
+    @override_settings(
+        MIDDLEWARE=[
+            "tests.test_checks.CompressionMiddlewareSubclass",
+            "django.middleware.common.CommonMiddleware",
+        ]
+    )
+    def test_w001_no_conflict_no_import(self):
+        with self.mock_import_string() as mocked:
+            messages = check_settings()
+
+        assert messages == []
+        mocked.assert_not_called()
+
+    @override_settings(
+        MIDDLEWARE=[
+            "django.middleware.gzip.GZipMiddleware",
+            "django_http_compression.middleware.HttpCompressionMiddleware",
+        ]
+    )
+    def test_w001_exact_path_no_import(self):
+        with self.mock_import_string() as mocked:
+            messages = check_settings()
+
+        assert len(messages) == 1
+        mocked.assert_not_called()
