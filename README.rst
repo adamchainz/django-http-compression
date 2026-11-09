@@ -114,6 +114,26 @@ This is because it’s the most performant, offering similar compression to Brot
 
 In practice, modern browsers do not send ``q`` factors and nearly all support Zstandard, so that will generally be selected.
 
+Each coding uses a compression level chosen to balance speed against size:
+
+* Zstandard: level 3, zstd’s default, which `CloudFlare also uses <https://blog.cloudflare.com/new-standards/#introducing-zstandard-compression>`__.
+* Brotli: quality 4, `as CloudFlare uses <https://blog.cloudflare.com/results-experimenting-brotli/>`__.
+* Gzip: level 6, like Django’s ``GZipMiddleware``.
+
+To change these, subclass the middleware and set the corresponding attributes:
+
+.. code-block:: python
+
+    from django_http_compression.middleware import HttpCompressionMiddleware
+
+
+    class CompressionMiddleware(HttpCompressionMiddleware):
+        zstandard_compression_level = 5  # -131072 to 22, higher is smaller but slower
+        brotli_compression_quality = 5  # 0 to 11
+        gzip_compression_level = 5  # 1 to 9
+
+Then use your subclass in ``MIDDLEWARE`` in place of ``HttpCompressionMiddleware``.
+
 The middleware skips compression if any of the following are true:
 
 * The ``content-type`` header does not match a known-compressible type like ``text/html``.
