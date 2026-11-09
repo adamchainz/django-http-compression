@@ -879,6 +879,11 @@ class BestCodingTests(ParametrizedTestCase, SimpleTestCase):
             ("gzip;anything=1;other=2", "identity"),
             ("gzip; q=0.9; anything=1", "identity"),
             ("gzip; anything=1; q=0.9", "identity"),
+            # Case-insensitivity
+            ("GZIP", "gzip"),
+            ("Br", "br"),
+            ("ZSTD", "zstd"),
+            ("gzip;Q=0.5, br;Q=0.9", "br"),
         ],
     )
     def test_best_coding(self, given, expected):
