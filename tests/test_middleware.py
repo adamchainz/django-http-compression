@@ -17,7 +17,12 @@ import pytest
 from brotli import Decompressor as BrotliDecompressor
 from brotli import compress as brotli_compress
 from brotli import decompress as brotli_decompress
-from django.http import StreamingHttpResponse
+from django.http import (
+    HttpRequest,
+    HttpResponse,
+    HttpResponseNotModified,
+    StreamingHttpResponse,
+)
 from django.middleware import gzip as django_middleware_gzip
 from django.test import RequestFactory, SimpleTestCase
 from unittest_parametrize import ParametrizedTestCase, parametrize
@@ -48,25 +53,7 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
         assert response.status_code == HTTPStatus.OK
         assert "content-encoding" not in response.headers
         assert "vary" not in response.headers
-
-    def test_streaming_bodyless_status_is_not_compressed(self):
-        # RFC 9110 forbids a body on 1xx, 204, and 304. An empty streaming
-        # response still has no content-length, so the short-body skip misses it.
-        for status in (
-            HTTPStatus.CONTINUE,
-            HTTPStatus.NO_CONTENT,
-            HTTPStatus.NOT_MODIFIED,
-        ):
-            middleware = HttpCompressionMiddleware(
-                lambda request, status=status: StreamingHttpResponse([], status=status)
-            )
-            request = RequestFactory().get("/", headers={"accept-encoding": "gzip"})
-            response = middleware(request)
-            assert isinstance(response, StreamingHttpResponse)
-
-            assert response.status_code == status
-            assert "content-encoding" not in response.headers
-            assert b"".join(response) == b""
+        assert response.content == b"short"
 
     def test_encoded(self):
         response = self.client.get("/encoded/", headers={"accept-encoding": "gzip"})
@@ -764,6 +751,110 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
             ]
         )
         assert content == b"".join(compress_sequence(iter(lines), level))
+
+    @parametrize(
+        "status",
+        [
+            (HTTPStatus.CONTINUE,),
+            (HTTPStatus.EARLY_HINTS,),
+            (HTTPStatus.NO_CONTENT,),
+            (HTTPStatus.NOT_MODIFIED,),
+        ],
+    )
+    def test_no_body_status(self, status: HTTPStatus) -> None:
+        # Content is still set, to check that a misbehaving view isn't encoded.
+        middleware = HttpCompressionMiddleware(
+            lambda request: HttpResponse(basic_html, status=status)
+        )
+        request = RequestFactory().get("/", headers={"accept-encoding": "gzip"})
+
+        response = middleware(request)
+
+        assert isinstance(response, HttpResponse)
+        assert response.status_code == status
+        assert "content-encoding" not in response.headers
+        if status == HTTPStatus.NOT_MODIFIED:
+            assert response.headers["vary"] == "accept-encoding"
+        else:
+            assert "vary" not in response.headers
+        assert response.content.decode() == basic_html
+
+    @parametrize(
+        "status",
+        [
+            (HTTPStatus.CONTINUE,),
+            (HTTPStatus.EARLY_HINTS,),
+            (HTTPStatus.NO_CONTENT,),
+            (HTTPStatus.NOT_MODIFIED,),
+        ],
+    )
+    def test_no_body_status_streaming(self, status: HTTPStatus) -> None:
+        middleware = HttpCompressionMiddleware(
+            lambda request: StreamingHttpResponse([], status=status)
+        )
+        request = RequestFactory().get("/", headers={"accept-encoding": "gzip"})
+
+        response = middleware(request)
+
+        assert isinstance(response, StreamingHttpResponse)
+        assert response.status_code == status
+        assert "content-encoding" not in response.headers
+        if status == HTTPStatus.NOT_MODIFIED:
+            assert response.headers["vary"] == "accept-encoding"
+        else:
+            assert "vary" not in response.headers
+        assert b"".join(response) == b""
+
+    @parametrize(
+        "status",
+        [
+            (HTTPStatus.NO_CONTENT,),
+            (HTTPStatus.NOT_MODIFIED,),
+        ],
+    )
+    async def test_no_body_status_async_streaming(self, status: HTTPStatus) -> None:
+        async def empty() -> AsyncIterator[bytes]:
+            if False:  # pragma: no cover
+                yield b""  # type: ignore[unreachable]
+
+        async def get_response(request: HttpRequest) -> StreamingHttpResponse:
+            return StreamingHttpResponse(empty(), status=status)
+
+        middleware = HttpCompressionMiddleware(get_response)
+        request = RequestFactory().get("/", headers={"accept-encoding": "gzip"})
+
+        response = await middleware(request)  # type: ignore [misc]
+
+        assert isinstance(response, StreamingHttpResponse)
+        assert response.status_code == status
+        assert "content-encoding" not in response.headers
+        if status == HTTPStatus.NOT_MODIFIED:
+            assert response.headers["vary"] == "accept-encoding"
+        else:
+            assert "vary" not in response.headers
+        assert b"".join([chunk async for chunk in response]) == b""
+
+    @parametrize(
+        "accept_encoding",
+        [("gzip",), ("",)],
+    )
+    def test_not_modified_vary(self, accept_encoding: str) -> None:
+        # As produced by ConditionalGetMiddleware, which copies the view's
+        # headers, not including those added by this middleware.
+        middleware = HttpCompressionMiddleware(
+            lambda request: HttpResponseNotModified(headers={"Vary": "Cookie"})
+        )
+        request = RequestFactory().get(
+            "/", headers={"accept-encoding": accept_encoding}
+        )
+
+        response = middleware(request)
+
+        assert isinstance(response, HttpResponse)
+        assert response.status_code == HTTPStatus.NOT_MODIFIED
+        assert "content-encoding" not in response.headers
+        assert response.headers["vary"] == "Cookie, accept-encoding"
+        assert response.content == b""
 
     def test_random_bytes_disabled(self):
         with mock.patch.object(HttpCompressionMiddleware, "max_random_bytes", 0):
