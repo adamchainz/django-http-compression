@@ -259,7 +259,9 @@ def best_coding(accept_encoding: str) -> Coding:
         # Protect against DoS attacks by limiting the length we’re willing to parse
         return "identity"
 
-    return _best_coding(accept_encoding)
+    # Content codings and parameter names are case-insensitive:
+    # https://www.rfc-editor.org/rfc/rfc9110#section-8.4.1
+    return _best_coding(accept_encoding.lower())
 
 
 # Browsers send a limited set of Accept-Encoding headers, so cache parsed results
