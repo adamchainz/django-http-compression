@@ -19,7 +19,7 @@ class ChecksTests(SimpleTestCase):
 
     @override_settings(
         MIDDLEWARE=[
-            "django_http_compression.middleware.CompressionMiddleware",
+            "django_http_compression.middleware.HttpCompressionMiddleware",
             "django.middleware.gzip.GZipMiddleware",
         ]
     )
@@ -30,7 +30,7 @@ class ChecksTests(SimpleTestCase):
 
     @override_settings(
         MIDDLEWARE=[
-            "django_http_compression.middleware.CompressionMiddleware",
+            "django_http_compression.middleware.HttpCompressionMiddleware",
         ]
     )
     def test_e001_just_compression_middleware(self):
@@ -48,7 +48,17 @@ class ChecksTests(SimpleTestCase):
 
     @override_settings(
         MIDDLEWARE=[
-            "django_http_compression.middleware.CompressionMiddleware",
+            "django_http_compression.middleware.HttpCompressionMiddleware",
+            "django.middleware.common.CommonMiddleware",
+        ]
+    )
+    def test_e001_unrelated_middleware(self):
+        messages = check_settings()
+        assert messages == []
+
+    @override_settings(
+        MIDDLEWARE=[
+            "django_http_compression.middleware.HttpCompressionMiddleware",
             "django.middleware.gzip.GZipMiddleware",
         ]
     )
@@ -60,7 +70,7 @@ class ChecksTests(SimpleTestCase):
 
     @override_settings(
         MIDDLEWARE=[
-            "django_http_compression.middleware.CompressionMiddleware",
+            "django_http_compression.middleware.HttpCompressionMiddleware",
             "compression_middleware.middleware.CompressionMiddleware",
         ]
     )
