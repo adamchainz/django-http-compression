@@ -13,6 +13,10 @@ Unreleased
 
 * Drop Django 4.2 to 5.1 support.
 
+* Allow subclasses to override compression levels with the ``zstandard_compression_level``, ``brotli_compression_quality``, and ``gzip_compression_level`` attributes.
+
+  `Issue #13 <https://github.com/adamchainz/django-http-compression/issues/13>`__.
+
 * Treat ``x-gzip`` in ``Accept-Encoding`` as equivalent to ``gzip``, per `RFC 9110 Section 8.4.1.3 <https://www.rfc-editor.org/rfc/rfc9110#section-8.4.1.3>`__.
 
 * Skip compressing partial responses, with status code 206, since byte ranges refer to the encoded content, per `RFC 9110 Section 14.4 <https://www.rfc-editor.org/rfc/rfc9110#section-14.4>`__.
