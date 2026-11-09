@@ -62,7 +62,9 @@ class HttpCompressionMiddleware:
             application/(?:
                 atom\+xml |
                 eot |
-                font |
+                # Exclude already-compressed WOFF fonts under their legacy type,
+                # which WhiteNoise still uses.
+                font(?!-woff) |
                 geo\+json |
                 graphql\+json |
                 javascript |

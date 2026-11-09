@@ -706,6 +706,13 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
             ("image/jpeg", False),
             ("image/png", False),
             ("video/mp4", False),
+            # Prefix matches, as in Caddy
+            ("application/font-sfnt", True),
+            ("application/json-seq", True),
+            ("application/xml-dtd", True),
+            # Legacy WOFF types
+            ("application/font-woff", False),
+            ("application/font-woff2", False),
         ],
     )
     def test_content_type_re(self, content_type: str, expected: bool) -> None:
