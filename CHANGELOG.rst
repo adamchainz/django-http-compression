@@ -20,6 +20,9 @@ Unreleased
   `PR #74 <https://github.com/adamchainz/django-http-compression/pull/74>`__.
   Thanks to Thibaut Decombe for the report in `Issue #73 <https://github.com/adamchainz/django-http-compression/issues/73>`__ and cherith for the initial work.
 
+* Remove ``Accept-Ranges`` from compressed responses, since byte ranges refer to the compressed content, which isn’t stable.
+  Previously, clients could resume a compressed download by requesting a range of the uncompressed content, corrupting it.
+
 * Support Python 3.14+ builds without ``libzstd``, such as on Azure App Service.
   The middleware now falls back to ``backports.zstd`` if it’s installed, and otherwise disables Zstandard.
   Previously, importing the middleware crashed.

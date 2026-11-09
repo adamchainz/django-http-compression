@@ -856,6 +856,57 @@ class HttpCompressionMiddlewareTests(ParametrizedTestCase, SimpleTestCase):
         assert response.headers["vary"] == "Cookie, accept-encoding"
         assert response.content == b""
 
+    def test_accept_ranges_removed(self):
+        middleware = HttpCompressionMiddleware(
+            lambda request: HttpResponse(basic_html, headers={"Accept-Ranges": "bytes"})
+        )
+        request = RequestFactory().get("/", headers={"accept-encoding": "gzip"})
+
+        response = middleware(request)
+
+        assert isinstance(response, HttpResponse)
+        assert response.headers["content-encoding"] == "gzip"
+        assert "accept-ranges" not in response.headers
+
+    def test_accept_ranges_removed_streaming(self):
+        middleware = HttpCompressionMiddleware(
+            lambda request: StreamingHttpResponse(
+                [basic_html.encode()], headers={"Accept-Ranges": "bytes"}
+            )
+        )
+        request = RequestFactory().get("/", headers={"accept-encoding": "gzip"})
+
+        response = middleware(request)
+
+        assert isinstance(response, StreamingHttpResponse)
+        assert response.headers["content-encoding"] == "gzip"
+        assert "accept-ranges" not in response.headers
+
+    @parametrize(
+        "accept_encoding,content",
+        [
+            # Not compressed: client doesn't accept any coding
+            ("", basic_html),
+            # Not compressed: too short
+            ("gzip", "short"),
+        ],
+    )
+    def test_accept_ranges_kept_uncompressed(
+        self, accept_encoding: str, content: str
+    ) -> None:
+        middleware = HttpCompressionMiddleware(
+            lambda request: HttpResponse(content, headers={"Accept-Ranges": "bytes"})
+        )
+        request = RequestFactory().get(
+            "/", headers={"accept-encoding": accept_encoding}
+        )
+
+        response = middleware(request)
+
+        assert isinstance(response, HttpResponse)
+        assert "content-encoding" not in response.headers
+        assert response.headers["accept-ranges"] == "bytes"
+
     def test_random_bytes_disabled(self):
         with mock.patch.object(HttpCompressionMiddleware, "max_random_bytes", 0):
             response = self.client.get("/", headers={"accept-encoding": "gzip"})
