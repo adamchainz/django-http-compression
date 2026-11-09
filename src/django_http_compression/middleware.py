@@ -296,6 +296,13 @@ class HttpCompressionMiddleware:
         if etag and etag.startswith('"'):
             response.headers["etag"] = "W/" + etag
 
+        # Byte ranges refer to the encoded content, which isn't stable, so
+        # stop advertising range support, as Caddy does. Otherwise a client
+        # could resume a compressed download with a range of uncompressed
+        # bytes.
+        # https://www.rfc-editor.org/rfc/rfc9110#section-14.3
+        response.headers.pop("accept-ranges", None)
+
         response.headers["content-encoding"] = coding
 
 

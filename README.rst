@@ -148,6 +148,8 @@ The middleware skips compression if any of the following are true:
 
 If the response has an ``etag`` header, the ``etag`` is made weak to comply with `RFC 9110 Section 8.8.1 <https://datatracker.ietf.org/doc/html/rfc9110.html#section-8.8.1>`__.
 
+If a compressed response has an ``accept-ranges`` header, it’s removed, since byte ranges refer to the compressed content, which isn’t stable (`RFC 9110 Section 14.3 <https://www.rfc-editor.org/rfc/rfc9110#section-14.3>`__).
+
 The middleware mitigates some attacks using the `Heal the Breach (HTB) technique <https://ieeexplore.ieee.org/document/9754554>`__, like Django’s ``GzipMiddleware`` does.
 This technique adds some random padding to responses: an ``x-noise`` header with a random token containing between 0 and 99 bytes long, Base64-encoded.
 This padding makes it much harder for attackers to infer the contents of the response by measuring its compressed size while modifying some input, for example by trying to guess an embedded session token character-by-character.
