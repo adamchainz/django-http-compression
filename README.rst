@@ -37,6 +37,7 @@ Django 5.2 to 6.1 supported.
 
 From Python 3.14, Zstandard support requires `libzstd <https://github.com/facebook/zstd>`__ to be linked into Python.
 (uv’s Python distributions include it on Unix.)
+If it isn’t, the middleware falls back to `backports.zstd <https://pypi.org/project/backports.zstd/>`__ if that’s installed, and otherwise disables Zstandard, using the other codings.
 
 Installation
 ------------
